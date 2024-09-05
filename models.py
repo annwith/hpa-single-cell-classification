@@ -3,6 +3,10 @@ import torch.nn as nn
 from torchvision import models
 
 def HPA_EfficientNet_B0_Model():
+    '''
+    Builds a model for the Human Protein Atlas dataset using EfficientNet-B0.
+    '''
+
     # Carregar o modelo EfficientNet-B0 pré-treinado
     model = models.efficientnet_b0(weights='EfficientNet_B0_Weights.DEFAULT')
 

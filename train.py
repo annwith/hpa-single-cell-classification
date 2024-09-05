@@ -16,7 +16,7 @@ def train_model(
     # Definir dispositivo
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # Instanciar o modelo
+    # Função que instancia o modelo
     model = HPA_EfficientNet_B0_Model()
     model = model.to(device)
 
@@ -40,19 +40,17 @@ def train_model(
     valid_loader = torch.utils.data.DataLoader(valid, batch_size=batch_size, shuffle=False)
 
     # Loop de treinamento
+    model.train()
     for epoch in range(num_epochs):
-        model.train()
         running_loss = 0.0
         for inputs, labels in train_loader:
-            print("Batch")
-
             inputs, labels = inputs.to(device), labels.to(device)
 
-            optimizer.zero_grad()
+            optimizer.zero_grad() # Zerar os gradientes acumulados dos passos anteriores. Sem isso, os gradientes seriam somados a cada batch.
             outputs = model(inputs)
             loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+            loss.backward() # Propaga o erro de volta pelas camadas do modelo
+            optimizer.step() # Após calcular os gradientes, o otimizador atualiza os pesos do modelo para minimizar a perda, usando um algoritmo como o SGD ou Adam.
             running_loss += loss.item()
 
         print(f"Epoch [{epoch+1}/{num_epochs}], Loss: {running_loss/len(train_loader):.4f}")
@@ -74,22 +72,20 @@ def train_model(
     print("Validação completa!")
 
 if __name__ == "__main__":
-    # Diretório do dataset e arquivo CSV com os rótulos
-    dataset_dir = '/mnt/ssd/hpa-single-cell-image-classification/train'
-    labels_csv = '/mnt/ssd/hpa-single-cell-image-classification/train.csv'
-
     # Parser para os argumentos de linha de comando
     parser = argparse.ArgumentParser(description='Treinamento de Modelo')
     parser.add_argument('--epochs', type=int, default=10, help='Número de épocas para treinar o modelo')
     parser.add_argument('--batch_size', type=int, default=32, help='Tamanho do batch')
     parser.add_argument('--lr', type=float, default=0.001, help='Taxa de aprendizado')
+    parser.add_argument('--dataset_dir', type=str, required=True, help='Diretório do dataset')
+    parser.add_argument('--labels_csv', type=str, required=True, help='Caminho para o arquivo CSV com os rótulos')
 
     args = parser.parse_args()
 
     # Chama a função de treinamento com os parâmetros recebidos
     train_model(
-        dataset_dir=dataset_dir,
-        labels_csv=labels_csv,
+        dataset_dir=args.dataset_dir,
+        labels_csv=args.labels_csv,
         num_epochs=args.epochs,
         batch_size=args.batch_size,
         learning_rate=args.lr

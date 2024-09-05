@@ -35,17 +35,20 @@ classes_map = {
 
 
 class HPADataset():
+    '''
+    A PyTorch Dataset for the Human Protein Atlas dataset.
+    '''
     def __init__(
-        self, 
-        dir: str,
+        self,
+        images_dir: str,
         labels_csv: str,
         indices: tp.Optional[tp.List[int]] = None,
         transform: tp.Optional[transforms.Compose] = None,
     ):
         '''
-        Initializes the ImageDataset object.
+        Initializes the HPADataset object.
         Parameters:
-            dir: str
+            images_dir: str
                 The directory where the images are stored.
             labels_csv: str
                 Path to the CSV file containing labels.
@@ -55,11 +58,11 @@ class HPADataset():
                 If not None, the images will be transformed.
         '''
         # Salvar os argumentos
-        self.dir = dir
+        self.images_dir = images_dir
         self.transform = transform
 
         # Listar todos os arquivos no diretório
-        self.filenames = os.listdir(self.dir)
+        self.filenames = os.listdir(self.images_dir)
 
         # Extrair a parte do nome do arquivo antes do primeiro "_"
         self.filenames = [filename.split("_")[0] for filename in self.filenames]
@@ -117,7 +120,7 @@ class HPADataset():
         
         # Pegar todas a imagens
         colors = ["_green", "_blue", "_red", "_yellow"]
-        images = [read_image(os.path.join(self.dir, self.filenames[idx] + color + ".png")) for color in colors]
+        images = [read_image(os.path.join(self.images_dir, self.filenames[idx] + color + ".png")) for color in colors]
         image = torch.cat(images, 0)
 
         # Aplicar transformações
@@ -146,8 +149,23 @@ def train_valid_split_multilabel(
     valid_transform: tp.Optional[transforms.Compose] = None,
     test_size=0.25
 ):
+    '''
+    Splits the dataset into training and validation sets.
+    Parameters:
+        dataset_dir: str
+            The directory where the images are stored.
+        labels_csv: str
+            Path to the CSV file containing labels.
+        train_transform: Optional[transforms.Compose]
+            If not None, the images in the training set will be transformed.
+        valid_transform: Optional[transforms.Compose]
+            If not None, the images in the validation set will be transformed.
+        test_size: float
+            The proportion of the dataset to include in the validation set.
+    '''
+
     # Carregar o dataset completo
-    dataset = HPADataset(dir=dataset_dir, labels_csv=labels_csv)
+    dataset = HPADataset(images_dir=dataset_dir, labels_csv=labels_csv)
     dataset_size = len(dataset)
 
     # Obter os índices de todas as amostras
@@ -163,18 +181,20 @@ def train_valid_split_multilabel(
     train_indices, valid_indices = train_test_split(
         indices,
         test_size=test_size,
-        stratify=binary_labels.sum(axis=1)  # Estratificar baseado no número de rótulos por amostra
+        stratify=binary_labels.sum(axis=1), # Estratificar baseado no número de rótulos por amostra
+        random_state=78
     )
 
     train_dataset = HPADataset(
-        dir=dataset_dir, 
-        labels_csv=labels_csv, 
-        indices=train_indices, 
+        images_dir=dataset_dir,
+        labels_csv=labels_csv,
+        indices=train_indices,
         transform=train_transform)
+
     valid_dataset = HPADataset(
-        dir=dataset_dir, 
-        labels_csv=labels_csv, 
-        indices=valid_indices, 
+        images_dir=dataset_dir,
+        labels_csv=labels_csv,
+        indices=valid_indices,
         transform=valid_transform)
 
     return train_dataset, valid_dataset
@@ -188,10 +208,9 @@ def train_transformations() -> transforms.Compose:
             The composition of transformations.
     '''
     return transforms.Compose([
-    transforms.Resize((512, 512)), 
-    transforms.ToImage(), # Transformar de tensor para imagem
-    transforms.ToDtype(torch.float32, scale=True)  
-])
+        transforms.ToImage(), # Transformar de tensor para imagem
+        transforms.ToDtype(torch.float32, scale=True)
+    ])
 
 
 def valid_transformations() -> transforms.Compose:
@@ -202,7 +221,6 @@ def valid_transformations() -> transforms.Compose:
             The composition of transformations.
     '''
     return transforms.Compose([
-    transforms.Resize((512, 512)), 
-    transforms.ToImage(), # Transformar de tensor para imagem
-    transforms.ToDtype(torch.float32, scale=True)  
-])
+        transforms.ToImage(), # Transformar de tensor para imagem
+        transforms.ToDtype(torch.float32, scale=True)
+    ])

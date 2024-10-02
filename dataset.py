@@ -240,3 +240,79 @@ class HPADatasetFourChannelsImages(HPADataset):
                 The transform to be set.
         '''
         self.transform = transform
+
+
+class HPATestImages():
+    '''
+    A PyTorch Dataset for the Human Protein Atlas dataset.
+    '''
+    def __init__(
+        self,
+        images_dir: str,
+        transform: tp.Optional[transforms.Compose] = None,
+    ):
+        '''
+        Initializes the HPADataset object.
+        Parameters:
+            images_dir: str
+                The directory where the images are stored.
+            labels_csv: str
+                Path to the CSV file containing labels.
+            indices: Optional[List[int]]
+                Indices to use for this subset of the dataset.
+            transform: Optional[transforms.Compose]
+                If not None, the images will be transformed.
+        '''
+        # Salvar os argumentos
+        self.images_dir = images_dir
+        self.transform = transform
+
+        # Listar todos os arquivos no diretório
+        self.filenames = os.listdir(self.images_dir)
+
+        # Remover a extensão dos arquivos
+        self.filenames = [filename.split(".")[0] for filename in self.filenames]
+
+        # Ordenar a lista de arquivos
+        self.filenames.sort()
+
+    def __len__(self) -> int:
+        '''
+        Returns the number of images in the dataset.
+        Returns:
+            int
+                The number of images in the dataset.
+        '''
+        return len(self.filenames)
+
+    def __getitem__(self, idx) -> torch.Tensor:
+        '''
+        Returns the image and its label.
+        Parameters:
+            idx: int
+                The index of the image to be returned.
+        Returns:
+            Tuple[torch.Tensor, torch.Tensor]
+                A tuple containing the image and its label.
+        '''
+        # Checar se o índice é válido
+        if idx >= self.__len__():
+            raise IndexError
+
+        # Pegar imagem
+        image = read_image(os.path.join(self.images_dir, self.filenames[idx]) + ".png")
+        
+        # Aplicar transformações
+        if self.transform:
+            image = self.transform(image)
+
+        return image
+
+    def set_transform(self, transform: tp.Optional[transforms.Compose]) -> None:
+        '''
+        Sets the transform attribute.
+        Parameters:
+            transform: Optional[transforms.Compose]
+                The transform to be set.
+        '''
+        self.transform = transform

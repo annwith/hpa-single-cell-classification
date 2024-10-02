@@ -245,6 +245,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # Pesos das classes
+    class_weights = [0.1, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 10.0, 1.0, 0.5, 0.5, 5.0, 0.2, 0.5, 1.0]
+
+    # Converter para torch tensor e garantir que seja do tipo float
+    class_weights = torch.tensor(class_weights, dtype=torch.float32)
+
     if args.model == 'efficientnet-b0':
         from models import HPA_EfficientNet_B0_Model
         model_arq = HPA_EfficientNet_B0_Model()
@@ -252,18 +258,30 @@ if __name__ == "__main__":
         from models import SqueezeNetCAM
         model_arq = SqueezeNetCAM()
 
-    # Pesos das classes
-    class_weights = [0.1, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 10.0, 1.0, 0.5, 0.5, 5.0, 0.2, 0.5, 1.0]
+        # SqueezeNet
+        # Congelar todas as camadas por padrão
+        for param in model_arq.parameters():
+            param.requires_grad = False
 
-    # Converter para torch tensor e garantir que seja do tipo float
-    class_weights = torch.tensor(class_weights, dtype=torch.float32)
+        # Descongelar as camadas do classificador
+        for param in model_arq.squeezenet.classifier.parameters():
+            param.requires_grad = True
+
+        # Definir o otimizador apenas para os parâmetros descongelados
+        optimizer = torch.optim.Adam(
+            filter(lambda p: p.requires_grad, model_arq.parameters()),
+            lr=args.lr
+        )
+
+        # Definir a função de perda (criterion)
+        criterion = nn.CrossEntropyLoss(weight=class_weights)
 
     # Chama a função de treinamento com os parâmetros recebidos
     train_squeeze_cam(
         dataset_dir=args.dataset_dir,
         labels_csv=args.labels_csv,
-        optimizer=optim.Adam(model_arq.parameters(), lr=args.lr),
-        criterion=nn.BCEWithLogitsLoss(pos_weight=class_weights),
+        optimizer=optimizer,
+        criterion=criterion,
         model=model_arq,
         batch_size=args.batch_size,
         weights_update=args.weights_update,

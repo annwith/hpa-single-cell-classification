@@ -31,11 +31,11 @@ cd $WORK_DIR
 
 # Executar o train.py com os argumentos especificados
 $PY train.py \
-    --epochs 10 \
-    --batch_size 8 \
-    --weights_update 8 \
+    --epochs 5 \
+    --batch_size 64 \
+    --weights_update 1 \
     --lr 0.001 \
     --model squeezenet-cam \
-    --dataset_dir /mnt/ssd/hpa-single-cell-image-classification/join_resized_train \
-    --labels_csv /mnt/ssd/hpa-single-cell-image-classification/train.csv \
-    --checkpoint /mnt/ssd/checkpoints/squeezenet_checkpoint.pth
+    --dataset_dir /home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train \
+    --labels_csv /home/lovelace/proj/proj1018/jmidlej/datasets/train.csv \
+    --checkpoint /home/lovelace/proj/proj1018/jmidlej/checkpoints/squeezenet_checkpoint.pth

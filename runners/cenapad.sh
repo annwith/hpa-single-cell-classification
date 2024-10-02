@@ -1,5 +1,5 @@
 #PBS -N hpa-squeezenet
-#PBS -q miggpu
+#PBS -q testegpu
 #PBS -e hpa-squeezenet-errors.txt
 #PBS -o hpa-squeezenet-logs.txt
 

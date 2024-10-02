@@ -37,4 +37,4 @@ $PY train.py \
     --model squeezenet-cam \
     --dataset_dir /home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train \
     --labels_csv /home/lovelace/proj/proj1018/jmidlej/datasets/train.csv \
-    --checkpoint squeezenet_checkpoint.pth
+    --checkpoint /home/lovelace/proj/proj1018/jmidlej/checkpoints/squeezenet_checkpoint.pth

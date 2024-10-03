@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 from torchvision import models
-from torchvision.models import SqueezeNet1_1_Weights
 
 def HPA_EfficientNet_B0_Model():
     '''
@@ -47,8 +46,12 @@ def HPA_EfficientNet_B0_Model():
 class SqueezeNetCAM(nn.Module):
     def __init__(self, num_classes=19):
         super(SqueezeNetCAM, self).__init__()
-        # Carregar o modelo SqueezeNet pré-treinado
-        self.squeezenet = models.squeezenet1_1(weights=SqueezeNet1_1_Weights.IMAGENET1K_V1)
+
+        # Carregar o modelo SqueezeNet
+        self.squeezenet = models.squeezenet1_1(pretrained=False)
+
+        # Carregar os pesos salvos do SqueezeNet
+        self.squeezenet = torch.load('weights/squeezenet_cam.pth')
 
         # Obter os pesos da camada original com 3 canais
         original_conv1_weights = self.squeezenet.features[0].weight.data

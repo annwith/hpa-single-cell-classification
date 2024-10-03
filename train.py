@@ -256,7 +256,7 @@ if __name__ == "__main__":
         model_arq = HPA_EfficientNet_B0_Model()
     elif args.model == 'squeezenet-cam':
         from models import SqueezeNetCAM
-        model_arq = SqueezeNetCAM()
+        model_arq = SqueezeNetCAM(num_classes=19)
 
         # SqueezeNet
         # Congelar todas as camadas por padrão

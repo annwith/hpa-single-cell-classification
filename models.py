@@ -48,7 +48,7 @@ class SqueezeNetCAM(nn.Module):
         super(SqueezeNetCAM, self).__init__()
 
         # Carregar o modelo SqueezeNet
-        self.squeezenet = models.squeezenet1_1(pretrained=False)
+        self.squeezenet = models.squeezenet1_1(weights=None)
 
         # Obter os pesos da camada original com 3 canais
         original_conv1_weights = self.squeezenet.features[0].weight.data
@@ -68,8 +68,17 @@ class SqueezeNetCAM(nn.Module):
         # Camada de pool adaptativa para combinar com o CAM
         self.global_avg_pool = nn.AdaptiveAvgPool2d((1, 1))
 
-        # Carregar os pesos salvos do SqueezeNet
-        self.squeezenet.load_state_dict(torch.load('weights/squeezenet_cam.pth'))
+        # Carregar o state_dict salvo
+        state_dict = torch.load('weights/squeezenet_cam.pth', weights_only=True)
+
+        # Remover o prefixo 'squeezenet.' das chaves
+        new_state_dict = {}
+        for key in state_dict.keys():
+            new_key = key.replace('squeezenet.', '')  # Remover o prefixo
+            new_state_dict[new_key] = state_dict[key]
+
+        # Agora carregar o novo state_dict no modelo
+        self.squeezenet.load_state_dict(new_state_dict)
 
     def forward(self, x):
         # Extrair features da última camada convolucional

@@ -139,7 +139,7 @@ class HPADataset():
         self.transform = transform
 
 
-class HPADatasetFourChannelsImages(HPADataset):
+class HPADatasetFourChannelsImages():
     '''
     A PyTorch Dataset for the Human Protein Atlas dataset.
     '''
@@ -316,3 +316,4 @@ class HPATestImages():
                 The transform to be set.
         '''
         self.transform = transform
+

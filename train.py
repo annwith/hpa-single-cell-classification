@@ -6,12 +6,12 @@ import typing as tp
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import wandb
 
 from utils import save_checkpoint, load_checkpoint, train_valid_split_multilabel, train_transformations, valid_transformations
 from dataset import HPADatasetFourChannelsImages
-from models import HPA_EfficientNet_B0_Model, SqueezeNetCAM
+from models import HPA_EfficientNet_B0, SqueezeNetCAM
 
-import wandb
 
 
 def train_model(
@@ -22,6 +22,7 @@ def train_model(
     model: nn.Module,
     batch_size: int,
     num_epochs: int,
+    weights_path: tp.Optional[str] = None,
     checkpoint: str,
     resume_checkpoint: tp.Optional[str] = None,
     project_name: str = "image_classification_project",  # wandb project name
@@ -137,6 +138,7 @@ if __name__ == "__main__":
     parser.add_argument('--model', type=str, default='efficientnet-b0', help='Modelo a ser treinado')
     parser.add_argument('--dataset_dir', type=str, required=True, help='Diretório do dataset')
     parser.add_argument('--labels_csv', type=str, required=True, help='Caminho para o arquivo CSV com os rótulos')
+    parser.add_argument('--weights_path', type=str, default=None, help='Caminho para os pesos pré-treinados')
     parser.add_argument('--checkpoint', type=str, default='checkpoint.pth', help='Caminho para salvar o checkpoint')
     parser.add_argument('--resume', type=str, default=None, help='Caminho para o checkpoint para retomar o treinamento')
 
@@ -149,7 +151,7 @@ if __name__ == "__main__":
     class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
 
     if args.model == 'efficientnet-b0':
-        model_arq = HPA_EfficientNet_B0_Model()
+        model_arq = HPA_EfficientNet_B0(num_classes=19)
 
     elif args.model == 'squeezenet-cam':
         model_arq = SqueezeNetCAM(num_classes=19)
@@ -181,6 +183,7 @@ if __name__ == "__main__":
         model=model_arq,
         batch_size=args.batch_size,
         num_epochs=args.epochs,
+        weights_path=args.weights_path,
         checkpoint=args.checkpoint,
         resume_checkpoint=args.resume,
         project_name="image_classification_project",

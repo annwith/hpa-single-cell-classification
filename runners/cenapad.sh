@@ -38,4 +38,5 @@ $PY train.py \
     --model efficientnet-B0 \
     --dataset_dir /home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train \
     --labels_csv /home/lovelace/proj/proj1018/jmidlej/datasets/train.csv \
+    --weights_path /home/lovelace/proj/proj1018/jmidlej/checkpoints/efficientnet_checkpoint.pth \
     --checkpoint /home/lovelace/proj/proj1018/jmidlej/checkpoints/squeezenet_checkpoint.pth

@@ -3,13 +3,23 @@ import torch.nn as nn
 from torchvision import models
 
 
-def HPA_EfficientNet_B0(num_classes: int):
+def HPA_EfficientNet_B0(num_classes: int, weights: str = None, weights_path: str = None):
     '''
     Builds a model for the Human Protein Atlas dataset using EfficientNet-B0.
+
+    Parameters:
+        num_classes: int
+            The number of classes in the dataset.
+        weights: str
+            The weights to use for the EfficientNet-B0 model.
+        weights_path: str
+            The path to the weights file to load.
+    Returns:
+        nn.Module
     '''
 
     # Carregar o modelo EfficientNet-B0 pré-treinado
-    model = models.efficientnet_b0(weights='EfficientNet_B0_Weights.DEFAULT')
+    model = models.efficientnet_b0(weights=weights)
 
     # Obter a primeira camada convolucional
     first_conv_layer = model.features[0][0]
@@ -39,6 +49,10 @@ def HPA_EfficientNet_B0(num_classes: int):
 
     # Aplicar a função sigmoid na saída para multirrótulo
     model.add_module('sigmoid', torch.nn.Sigmoid())
+
+    if weights_path is not None:
+        state_dict = torch.load(weights_path)
+        model.load_state_dict(state_dict)
 
     return model
 

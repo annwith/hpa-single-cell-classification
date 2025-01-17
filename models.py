@@ -3,7 +3,7 @@ import torch.nn as nn
 from torchvision import models
 
 
-def HPA_EfficientNet_B0_Model():
+def HPA_EfficientNet_B0(num_classes: int):
     '''
     Builds a model for the Human Protein Atlas dataset using EfficientNet-B0.
     '''
@@ -28,15 +28,14 @@ def HPA_EfficientNet_B0_Model():
     with torch.no_grad():
         new_conv_layer.weight[:, :3, :, :] = first_conv_layer.weight
 
-        # Inicializar os pesos do quarto canal com valores aleatórios entre -1 e 1
-        new_conv_layer.weight[:, 3:, :, :] = 2 * torch.rand_like(first_conv_layer.weight[:, :1, :, :]) - 1
+        # Duplicate the first channel's weights into the fourth channel
+        new_conv_layer.weight[:, 3, :, :] = first_conv_layer.weight[:, 0, :, :]
 
     # Substituir a camada original pela nova
     model.features[0][0] = new_conv_layer
 
     # Modificar a última camada para classificação multirrótulo
-    num_labels = 19
-    model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, num_labels)
+    model.classifier[1] = torch.nn.Linear(model.classifier[1].in_features, num_classes)
 
     # Aplicar a função sigmoid na saída para multirrótulo
     model.add_module('sigmoid', torch.nn.Sigmoid())

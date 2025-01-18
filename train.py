@@ -1,17 +1,16 @@
 import argparse
-from tqdm import tqdm  # Importar tqdm para a barra de progresso
-
 import typing as tp
+from tqdm import tqdm  # Importar tqdm para a barra de progresso
 
 import torch
 import torch.nn as nn
 import torch.optim as optim
+
 import wandb
 
 from utils import save_checkpoint, load_checkpoint, train_valid_split_multilabel, train_transformations, valid_transformations
 from dataset import HPADatasetFourChannelsImages
 from models import HPA_EfficientNet_B0, SqueezeNetCAM
-
 
 
 def train_model(
@@ -22,7 +21,6 @@ def train_model(
     model: nn.Module,
     batch_size: int,
     num_epochs: int,
-    weights_path: tp.Optional[str] = None,
     checkpoint: str,
     resume_checkpoint: tp.Optional[str] = None,
     project_name: str = "image_classification_project",  # wandb project name
@@ -151,7 +149,11 @@ if __name__ == "__main__":
     class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
 
     if args.model == 'efficientnet-b0':
-        model_arq = HPA_EfficientNet_B0(num_classes=19)
+        model_arq = HPA_EfficientNet_B0(
+            num_classes=19,
+            weights=None,
+            weights_path=args.weights_path
+        )
 
     elif args.model == 'squeezenet-cam':
         model_arq = SqueezeNetCAM(num_classes=19)
@@ -183,7 +185,6 @@ if __name__ == "__main__":
         model=model_arq,
         batch_size=args.batch_size,
         num_epochs=args.epochs,
-        weights_path=args.weights_path,
         checkpoint=args.checkpoint,
         resume_checkpoint=args.resume,
         project_name="image_classification_project",

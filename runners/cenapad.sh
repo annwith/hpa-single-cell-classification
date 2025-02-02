@@ -30,13 +30,17 @@ cd $WORK_DIR
 # endregion
 
 # Executar o train.py com os argumentos especificados
+echo "=================================================================="
+echo "[train started at $(date +'%Y-%m-%d %H:%M:%S')."
+echo "=================================================================="
+
 $PY train.py \
     --epochs 5 \
     --batch_size 64 \
     --weights_update 1 \
-    --lr 0.001 \
-    --model efficientnet-B0 \
-    --dataset_dir /home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train \
-    --labels_csv /home/lovelace/proj/proj1018/jmidlej/datasets/train.csv \
-    --weights_path /home/lovelace/proj/proj1018/jmidlej/checkpoints/efficientnet_checkpoint.pth \
-    --checkpoint /home/lovelace/proj/proj1018/jmidlej/checkpoints/squeezenet_checkpoint.pth
+    --learning_rate 0.001 \
+    --architecture resnet50 \
+    --dataset_path /home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train \
+    --labels_path /home/lovelace/proj/proj1018/jmidlej/datasets/train.csv \
+    --pretrained_weights_path /home/lovelace/proj/proj1018/jmidlej/checkpoints/pretrained_resnet_checkpoint.pth \
+    --save_checkpoint_path /home/lovelace/proj/proj1018/jmidlej/checkpoints/resnet_checkpoint.pth

@@ -21,6 +21,7 @@ def train_model(
     architecture: str,
     batch_size: int,
     num_epochs: int,
+    pretrained_weights_path: tp.Optional[str],
     save_checkpoint_path: str,
     resume_checkpoint_path: tp.Optional[str] = None,
     project_name: str = "hpa-project",  # wandb project name
@@ -70,7 +71,8 @@ def train_model(
 
     # Load the model
     model = HPAClassifier(
-        backbone=architecture, 
+        backbone=architecture,
+        pretrained_weights_path=pretrained_weights_path,
         num_classes=19, 
         in_channels=4)
 
@@ -102,8 +104,8 @@ def train_model(
     start_epoch = 0
 
     # Resume from checkpoint if provided
-    if resume_checkpoint:
-        start_epoch, train_losses, valid_losses = load_checkpoint(model, optimizer, resume_checkpoint)
+    if resume_checkpoint_path:
+        start_epoch, train_losses, valid_losses = load_checkpoint(model, optimizer, resume_checkpoint_path)
 
     best_valid_loss = float("inf")
 
@@ -198,6 +200,7 @@ if __name__ == "__main__":
         class_weights=class_weights_tensor,
         batch_size=args.batch_size,
         num_epochs=args.epochs,
+        pretrained_weights_path=args.pretrained_weights_path,
         save_checkpoint_path=args.save_checkpoint_path,
         resume_checkpoint_path=args.resume_checkpoint_path,
         project_name="hpa-project",

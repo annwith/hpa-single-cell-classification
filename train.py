@@ -185,6 +185,19 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
+    # Print formatted arguments
+    print("\nParâmetros de Treinamento:")
+    print(f"{'Epochs:':<25} {args.epochs}")
+    print(f"{'Batch Size:':<25} {args.batch_size}")
+    print(f"{'Weights Update:':<25} {args.weights_update}")
+    print(f"{'Learning Rate:':<25} {args.learning_rate}")
+    print(f"{'Architecture:':<25} {args.architecture}")
+    print(f"{'Dataset Path:':<25} {args.dataset_path}")
+    print(f"{'Labels Path:':<25} {args.labels_path}")
+    print(f"{'Pretrained Weights Path:':<25} {args.pretrained_weights_path if args.pretrained_weights_path else 'None'}")
+    print(f"{'Save Checkpoint Path:':<25} {args.save_checkpoint_path}")
+    print(f"{'Resume Checkpoint Path:':<25} {args.resume_checkpoint_path if args.resume_checkpoint_path else 'None'}")
+
     # Pesos das classes
     class_weights = [0.1, 1.0, 0.5, 1.0, 1.0, 1.0, 1.0, 0.5, 1.0, 1.0, 1.0, 10.0, 1.0, 0.5, 0.5, 5.0, 0.2, 0.5, 1.0]
 

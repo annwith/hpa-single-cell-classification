@@ -91,7 +91,7 @@ def train_model(
     model.to(device)
 
     # Initialize wandb
-    wandb.init(project=project_name, name=run_name)
+    wandb.init(project=project_name, name=run_name, mode="offline")
     wandb.config.update({
         "batch_size": batch_size,
         "num_epochs": num_epochs,

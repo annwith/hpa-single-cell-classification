@@ -10,25 +10,83 @@ import wandb
 
 from utils import save_checkpoint, load_checkpoint, train_valid_split_multilabel, train_transformations, valid_transformations
 from dataset import HPADatasetFourChannelsImages
-from models import HPA_EfficientNet_B0, SqueezeNetCAM
+from models import HPAClassifier
 
 
 def train_model(
-    dataset_dir: str,
-    labels_csv: str,
-    optimizer: optim.Optimizer,
-    criterion: nn.Module,
-    model: nn.Module,
+    dataset_path: str,
+    labels_path: str,
+    learning_rate: float,
+    class_weights: torch.Tensor,
+    architecture: str,
     batch_size: int,
     num_epochs: int,
-    checkpoint: str,
-    resume_checkpoint: tp.Optional[str] = None,
-    project_name: str = "image_classification_project",  # wandb project name
-    run_name: str = "experiment_1"  # wandb run name
+    save_checkpoint_path: str,
+    resume_checkpoint_path: tp.Optional[str] = None,
+    project_name: str = "hpa-project",  # wandb project name
+    run_name: str = "experiment-1"  # wandb run name
 ):
-    '''
-    Function to train an image classification model with wandb integration.
-    '''
+    """
+    Train a model using the given parameters.
+
+    Parameters:
+        dataset_path: str
+            The path to the dataset.
+        labels_path: str
+            The path to the labels CSV file.
+        learning_rate: float
+            The learning rate for the optimizer.
+        class_weights: torch.Tensor
+            The class weights tensor.
+        architecture: str
+            The architecture to use.
+        batch_size: int
+            The batch size.
+        num_epochs: int
+            The number of epochs to train the model.
+        save_checkpoint_path: str
+            The path to save the checkpoint.
+        resume_checkpoint_path: str
+            The path to the checkpoint to resume training from.
+        project_name: str
+            The name of the wandb project.
+        run_name: str
+            The name of the wandb run.
+    """
+
+    # Load the dataset
+    train, valid = train_valid_split_multilabel(
+        hpa_dataset_class=HPADatasetFourChannelsImages,
+        dataset_dir=dataset_path,
+        labels_csv=labels_path,
+        train_transform=train_transformations(),
+        valid_transform=valid_transformations(),
+        test_size=0.10,
+    )
+
+    # Create the data loaders
+    train_loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(valid, batch_size=batch_size, shuffle=False)
+
+    # Load the model
+    model = HPAClassifier(
+        backbone=architecture, 
+        num_classes=19, 
+        in_channels=4)
+
+    # Definir o otimizador
+    optimizer = optim.Adam(
+        model.parameters(),
+        lr=learning_rate)
+
+    # Definir a função de perda (criterion)
+    criterion = nn.CrossEntropyLoss(weight=class_weights)
+
+    # Set the device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # Put the model on the device
+    model.to(device)
 
     # Initialize wandb
     wandb.init(project=project_name, name=run_name)
@@ -37,23 +95,6 @@ def train_model(
         "num_epochs": num_epochs,
         "learning_rate": optimizer.defaults["lr"]
     })
-
-    # Load the dataset
-    train, valid = train_valid_split_multilabel(
-        hpa_dataset_class=HPADatasetFourChannelsImages,
-        dataset_dir=dataset_dir,
-        labels_csv=labels_csv,
-        train_transform=train_transformations(),
-        valid_transform=valid_transformations(),
-        test_size=0.20,
-    )
-
-    train_loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(valid, batch_size=batch_size, shuffle=False)
-
-    # Set the device
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model.to(device)
 
     # Initialize loss and epoch variables
     train_losses = []
@@ -128,17 +169,17 @@ def train_model(
 
 if __name__ == "__main__":
     # Parser para os argumentos de linha de comando
-    parser = argparse.ArgumentParser(description='Treinamento de Modelo')
+    parser = argparse.ArgumentParser(description='Treinamento')
     parser.add_argument('--epochs', type=int, default=10, help='Número de épocas para treinar o modelo')
     parser.add_argument('--batch_size', type=int, default=64, help='Tamanho do batch')
     parser.add_argument('--weights_update', type=int, default=1, help='Número de batches para acumular gradientes antes de atualizar os pesos')
-    parser.add_argument('--lr', type=float, default=0.001, help='Taxa de aprendizado')
-    parser.add_argument('--model', type=str, default='efficientnet-b0', help='Modelo a ser treinado')
-    parser.add_argument('--dataset_dir', type=str, required=True, help='Diretório do dataset')
-    parser.add_argument('--labels_csv', type=str, required=True, help='Caminho para o arquivo CSV com os rótulos')
-    parser.add_argument('--weights_path', type=str, default=None, help='Caminho para os pesos pré-treinados')
-    parser.add_argument('--checkpoint', type=str, default='checkpoint.pth', help='Caminho para salvar o checkpoint')
-    parser.add_argument('--resume', type=str, default=None, help='Caminho para o checkpoint para retomar o treinamento')
+    parser.add_argument('--learning_rate', type=float, default=0.001, help='Taxa de aprendizado')
+    parser.add_argument('--architecture', type=str, default='resnet50', help='Arquitetura')
+    parser.add_argument('--dataset_path', type=str, required=True, help='Diretório do dataset')
+    parser.add_argument('--labels_path', type=str, required=True, help='Caminho para o arquivo CSV com os rótulos')
+    parser.add_argument('--pretrained_weights_path', type=str, default=None, help='Caminho para os pesos pré-treinados')
+    parser.add_argument('--save_checkpoint_path', type=str, default='checkpoint.pth', help='Caminho para salvar o checkpoint')
+    parser.add_argument('--resume_checkpoint_path', type=str, default=None, help='Caminho para o checkpoint para retomar o treinamento')
 
     args = parser.parse_args()
 
@@ -148,45 +189,17 @@ if __name__ == "__main__":
     # Converter para torch tensor e garantir que seja do tipo float
     class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
 
-    if args.model == 'efficientnet-b0':
-        model_arq = HPA_EfficientNet_B0(
-            num_classes=19,
-            weights=None,
-            weights_path=args.weights_path
-        )
-
-    elif args.model == 'squeezenet-cam':
-        model_arq = SqueezeNetCAM(num_classes=19)
-
-        # SqueezeNet
-        # Congelar todas as camadas por padrão
-        for param in model_arq.parameters():
-            param.requires_grad = False
-
-        # Descongelar as camadas do classificador
-        for param in model_arq.squeezenet.classifier.parameters():
-            param.requires_grad = True
-
-    # Definir o otimizador apenas para os parâmetros descongelados
-    model_optimizer = torch.optim.Adam(
-        filter(lambda p: p.requires_grad, model_arq.parameters()),
-        lr=args.lr
-    )
-
-    # Definir a função de perda (criterion)
-    model_criterion = nn.CrossEntropyLoss(weight=class_weights_tensor)
-
     # Chama a função de treinamento com os parâmetros recebidos
     train_model(
-        dataset_dir=args.dataset_dir,
-        labels_csv=args.labels_csv,
-        optimizer=model_optimizer,
-        criterion=model_criterion,
-        model=model_arq,
+        dataset_path=args.dataset_path,
+        labels_path=args.labels_path,
+        architecture=args.architecture,
+        learning_rate=args.learning_rate,
+        class_weights=class_weights_tensor,
         batch_size=args.batch_size,
         num_epochs=args.epochs,
-        checkpoint=args.checkpoint,
-        resume_checkpoint=args.resume,
-        project_name="image_classification_project",
-        run_name="experiment_1"
+        save_checkpoint_path=args.save_checkpoint_path,
+        resume_checkpoint_path=args.resume_checkpoint_path,
+        project_name="hpa-project",
+        run_name="experiment-1"
     )

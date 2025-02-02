@@ -1,6 +1,28 @@
 import torch
 import torch.nn as nn
 from torchvision import models
+import timm  # For loading ResNet, EfficientNet easily
+
+
+class HPAClassifier(nn.Module):
+    """
+    Classifier for the Human Protein Atlas dataset using a pretrained model from timm.
+    """
+
+    def __init__(self, backbone="resnet50", num_classes=10, pretrained=True, in_channels=4):
+        super().__init__()
+        self.model = timm.create_model(backbone, pretrained=pretrained, num_classes=num_classes)
+
+        # Adjust first convolutional layer to take 4-channel input
+        first_layer = self.model.conv1  # Works for ResNet
+        self.model.conv1 = nn.Conv2d(in_channels, first_layer.out_channels, 
+                                     kernel_size=first_layer.kernel_size, 
+                                     stride=first_layer.stride, 
+                                     padding=first_layer.padding, 
+                                     bias=first_layer.bias is not None)
+        
+    def forward(self, x):
+        return self.model(x)
 
 
 def HPA_EfficientNet_B0(num_classes: int, weights: str = None, weights_path: str = None):

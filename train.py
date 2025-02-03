@@ -5,6 +5,7 @@ from tqdm import tqdm  # Importar tqdm para a barra de progresso
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import torch.backends.cudnn as cudnn
 
 import wandb
 
@@ -86,6 +87,7 @@ def train_model(
 
     # Set the device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Device: {device}") # Print the device
 
     # Put the model on the device
     model.to(device)
@@ -184,6 +186,11 @@ if __name__ == "__main__":
     parser.add_argument('--resume_checkpoint_path', type=str, default=None, help='Caminho para o checkpoint para retomar o treinamento')
 
     args = parser.parse_args()
+
+    # Print CUDA and cuDNN versions
+    print(f"PyTorch version: {torch.__version__}")
+    print(f"CUDA version: {torch.version.cuda}")  # Print the CUDA version
+    print(f"cuDNN version: {cudnn.version()}")  # Print the cuDNN version
 
     # Print formatted arguments
     print("\nParâmetros de Treinamento:")

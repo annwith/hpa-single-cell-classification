@@ -207,7 +207,7 @@ def train_model(
         wandb.save(f'checkpoint_epoch_{epoch}.pth')  # Save model to W&B
 
         # Print the training and validation loss for this epoch
-        print(f"Epoch {epoch+1}/{epochs} - Train Loss: {train_loss:.4f} - Valid Loss: {valid_loss:.4f}")
+        print(f"Epoch {epoch+1}/{epochs} - Train Loss: {running_loss:.4f} - Valid Loss: {valid_loss:.4f}")
 
     # Log the final model after training
     wandb.save('final_model.pth')

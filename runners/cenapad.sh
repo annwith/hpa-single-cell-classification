@@ -1,18 +1,24 @@
-#PBS -N hpa-squeezenet
+#PBS -N hpa-test
 #PBS -q testegpu
-#PBS -e hpa-squeezenet-errors.txt
-#PBS -o hpa-squeezenet-logs.txt
+#PBS -e logs/test.err
+#PBS -o logs/test.log
 
 #
-# Train a model to perform multilabel classification over a WSSS dataset.
+# Train a model to perform multilabel classification.
 #
-
-# Load ENV variables
-runners/config/env.sh
 
 ENV=cenapad
 SCRATCH=$HOME
 WORK_DIR=$HOME/hpa-single-cell-classification
+
+unset CUDA_VISIBLE_DEVICES
+# export OMP_NUM_THREADS=8
+
+module load python/3.8.11-gcc-9.4.0
+
+# Activate virtual environment if it exists
+echo "Activating virtual environment... ($HOME/dev/bin/activate)"
+source $HOME/dev/bin/activate
 
 # Navigate to the working directory
 cd $WORK_DIR
@@ -37,14 +43,14 @@ PRETRAINED_WEIGHTS_PATH=none
 
 # Dataset parameters
 DATASET_CHANNELS=4
-DATASET_PATH="/mnt/ssd/hpa-single-cell-image-classification/join_resized_train"
-LABELS_PATH="/mnt/ssd/hpa-single-cell-image-classification/train.csv"
+DATASET_PATH="/home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train"
+LABELS_PATH="/home/lovelace/proj/proj1018/jmidlej/datasets/train.csv"
 
 CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
 
 # Checkpoint parameters
 RESUME_CHECKPOINT_PATH=none
-SAVE_CHECKPOINT_PATH="/mnt/ssd/checkpoints/resnet_checkpoint.pth"
+SAVE_CHECKPOINT_PATH="/home/lovelace/proj/proj1018/jmidlej/checkpoints/resnet_checkpoint.pth"
 
 # Train the model
 train () {

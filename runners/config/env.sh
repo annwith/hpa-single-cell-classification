@@ -1,16 +1,17 @@
 #!/bin/bash
 
 # Detect environment
-if [[ $ENV == "cenapad" ]]; then
+if [[ $ENV == cenapad ]]; then
+    echo "Environment: Cenapad"
 
-    unset CUDA_VISIBLE_DEVICES
+    # unset CUDA_VISIBLE_DEVICES
     # export OMP_NUM_THREADS=8
 
-    MODULES=("python/3.8.11-gcc-9.4.0")
+    # MODULES=("python/3.8.11-gcc-9.4.0")
 
     # Activate virtual environment if it exists
-    echo "Activating virtual environment... ($HOME/dev/bin/activate)"
-    source $HOME/dev/bin/activate
+    # echo "Activating virtual environment... ($HOME/dev/bin/activate)"
+    # source $HOME/dev/bin/activate
 
 else
     WORK_DIR=/home/juliana/Documentos/github-repositories/hpa-single-cell-classification

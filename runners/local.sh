@@ -34,6 +34,7 @@ ARCHITECTURE="resnet50"
 PRETRAINED_WEIGHTS_PATH=none
 
 # Dataset parameters
+DATASET_NAME="kaggle_joined_resized"
 DATASET_CHANNELS=4
 DATASET_PATH="/mnt/ssd/hpa-single-cell-image-classification/join_resized_train"
 LABELS_PATH="/mnt/ssd/hpa-single-cell-image-classification/train.csv"
@@ -44,16 +45,25 @@ CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0
 RESUME_CHECKPOINT_PATH=none
 SAVE_CHECKPOINT_PATH="/mnt/ssd/checkpoints/resnet_checkpoint.pth"
 
+# WandB parameters
+WANDB_PROJECT="hpa-single-cell-classification"
+WANDB_ENTITY="jmidlej"
+WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-$BATCH_SIZE-$ACCUMULATE_STEPS-$LEARNING_RATE-$(date +'%Y.%m.%d_%H:%M:%S')
+WANDB_MODE="offline"
+
+echo "WandB run name: $WANDB_RUN_NAME"
+
 # Train the model
 train () {
-    echo "=================================================================="
+    echo "\n=================================================================="
     echo "[train started at $(date +'%Y-%m-%d %H:%M:%S')]."
-    echo "=================================================================="
+    echo "==================================================================\n"
 
     $PY $WORK_DIR/train.py \
     --dataset_channels $DATASET_CHANNELS \
     --dataset_path $DATASET_PATH \
     --labels_path $LABELS_PATH \
+    --class_weights $CLASS_WEIGHTS \
     --architecture $ARCHITECTURE \
     --pretrained_weights_path $PRETRAINED_WEIGHTS_PATH \
     --epochs $EPOCHS \
@@ -61,7 +71,11 @@ train () {
     --accumulate_steps $ACCUMULATE_STEPS \
     --learning_rate $LEARNING_RATE \
     --save_checkpoint_path $SAVE_CHECKPOINT_PATH \
-    --resume_checkpoint_path $RESUME_CHECKPOINT_PATH 
+    --resume_checkpoint_path $RESUME_CHECKPOINT_PATH \
+    --wandb_project $WANDB_PROJECT \
+    --wandb_entity $WANDB_ENTITY \
+    --wandb_run_name $WANDB_RUN_NAME \
+    --wandb_mode $WANDB_MODE
 }
 
 train

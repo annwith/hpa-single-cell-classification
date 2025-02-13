@@ -28,8 +28,10 @@ def train_model(
     learning_rate: float,
     save_checkpoint_path: str,
     resume_checkpoint_path: tp.Optional[str] = None,
-    project_name: str = "hpa-project",  # wandb project name
-    run_name: str = "experiment-1"  # wandb run name
+    wandb_project_name: str = 'hpa-project',
+    wandb_entity_name: str = 'hpa-team',
+    wandb_run_name: str = 'experiment',
+    wandb_mode: str = 'offline'
 ):
     """
     Train a model using the given parameters.
@@ -47,8 +49,10 @@ def train_model(
     - learning_rate: Learning rate
     - save_checkpoint_path: Path to save the checkpoint
     - resume_checkpoint_path: Path to the checkpoint to resume training
-    - project_name: wandb project name
-    - run_name: wandb run name
+    - wandb_project_name: wandb project name
+    - wandb_entity_name: wandb entity name
+    - wandb_run_name: wandb run name
+    - wandb_mode: wandb mode
     """
 
     if dataset_channels != 4:
@@ -91,22 +95,23 @@ def train_model(
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"\nDevice: {device}") # Print the device
 
-    # Convert the class weights to a tensor
-    print("\nClass weights:", class_weights)
     if class_weights:
         class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
-        criterion = nn.CrossEntropyLoss(weight=class_weights_tensor.to(device))
+        criterion = nn.CrossEntropyLoss(weight=class_weights_tensor.to(device)) 
+        print("\nUsing class weights")
     else:
         criterion = nn.CrossEntropyLoss()
+        print("\nNot using class weights")
 
     # Put the model on the device
     model.to(device)
 
     # Initialize wandb
     wandb.init(
-        project=project_name, 
-        name=run_name, 
-        mode="offline")
+        project=wandb_project_name,
+        entity=wandb_entity_name,
+        name=wandb_run_name,
+        mode=wandb_mode)
     
     wandb.config.update({
         "dataset_channels": dataset_channels,
@@ -226,6 +231,10 @@ if __name__ == "__main__":
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate')
     parser.add_argument('--save_checkpoint_path', type=str, default='checkpoint.pth', help='Path to save the checkpoint')
     parser.add_argument('--resume_checkpoint_path', type=str, default=None, help='Path to the checkpoint to resume training')
+    parser.add_argument('--wandb_project_name', type=str, default='hpa-project', help='wandb project name')
+    parser.add_argument('--wandb_entity_name', type=str, default='hpa-team', help='wandb entity name')
+    parser.add_argument('--wandb_run_name', type=str, default='experiment', help='wandb run name')
+    parser.add_argument('--wandb_mode', type=str, default='offline', help='wandb mode')
 
     args = parser.parse_args()
 
@@ -262,6 +271,7 @@ if __name__ == "__main__":
 
     if args.class_weights:
         class_weights_list = list(map(float, args.class_weights.split(",")))
+        print("\nConverting class weights to list.")
     else:
         class_weights_list = None
 
@@ -279,6 +289,8 @@ if __name__ == "__main__":
         learning_rate=args.learning_rate,
         save_checkpoint_path=args.save_checkpoint_path,
         resume_checkpoint_path=args.resume_checkpoint_path,
-        project_name="hpa-project",
-        run_name="experiment-1"
+        wandb_project_name=args.wandb_project_name,
+        wandb_entity_name=args.wandb_entity_name,
+        wandb_run_name=args.wandb_run_name,
+        wandb_mode=args.wandb_mode
     )

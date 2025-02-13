@@ -10,9 +10,7 @@
 # Load ENV variables
 runners/config/env.sh
 
-ENV=cenapad
-SCRATCH=$HOME
-WORK_DIR=$HOME/hpa-single-cell-classification
+WORK_DIR=/home/juliana/Documentos/github-repositories/hpa-single-cell-classification
 
 # Navigate to the working directory
 cd $WORK_DIR

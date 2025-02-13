@@ -72,6 +72,22 @@ def train_valid_split_multilabel(
         labels_csv=labels_csv,
         indices=valid_indices,
         transform=valid_transform)
+    
+    # Count class occurrences
+    def get_label_counts(dataset):
+        label_counts = dataset.binary_labels.sum(dim=0).int().tolist()
+        return {classes_map[i]: count for i, count in enumerate(label_counts)}
+
+    # Print sorted class distributions
+    print("\nSorted label counts: (train)")
+    train_label_counts = get_label_counts(train_dataset)
+    for label, count in sorted(train_label_counts.items(), key=lambda item: item[1], reverse=True):
+        print(f"{label}: {count}")
+
+    print("\nSorted label counts: (valid)")
+    valid_label_counts = get_label_counts(valid_dataset)
+    for label, count in sorted(valid_label_counts.items(), key=lambda item: item[1], reverse=True):
+        print(f"{label}: {count}")
 
     return train_dataset, valid_dataset
 
@@ -105,31 +121,30 @@ def valid_transformations() -> transforms.Compose:
 
 
 def save_checkpoint(
-    epoch: int,
     model: nn.Module,
     optimizer: optim.Optimizer,
-    train_losses: tp.List[float],
-    valid_losses: tp.List[float],
-    filename: str = "checkpoint.pth"
-):
-    '''
-    Salva um checkpoint do modelo, otimizador e outras informações úteis.
-    Parâmetros:
-        epoch: int - Número da época atual
-        model: nn.Module - Modelo a ser salvo
-        optimizer: optim.Optimizer - Otimizador a ser salvo
-        train_losses: List[float] - Lista de loss no treinamento
-        valid_losses: List[float] - Lista de loss na validação
-        filename: str - Nome do arquivo para salvar o checkpoint
-    '''
-    checkpoint = {
+    epoch: int,
+    loss: float,
+    filename: str):
+    """
+    Save the model checkpoint to the specified file.
+    
+    Parameters:
+        model: The model to save.
+        optimizer: The optimizer used in training.
+        epoch: The current epoch.
+        loss: The loss (could be train or validation loss).
+        filename: Path to save the checkpoint.
+    """
+    torch.save({
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
-        'train_losses': train_losses,
-        'valid_losses': valid_losses
-    }
-    torch.save(checkpoint, filename)
+        'loss': loss
+    }, filename)
+
+    # Print the saved checkpoint information
+    print(f"Checkpoint saved at epoch {epoch} with loss {loss:.4f}.")
 
 
 def load_checkpoint(
@@ -137,24 +152,28 @@ def load_checkpoint(
     optimizer: optim.Optimizer,
     filename: str = "checkpoint.pth"
 ):
-    '''
-    Carrega um checkpoint do modelo e otimizador.
-    Parâmetros:
-        model: nn.Module - Modelo a ser carregado
-        optimizer: optim.Optimizer - Otimizador a ser carregado
-        filename: str - Nome do arquivo para carregar o checkpoint
-    Retorna:
-        epoch: int - Número da última época treinada
-        train_losses: List[float] - Lista de loss no treinamento
-        valid_losses: List[float] - Lista de loss na validação
-    '''
-    checkpoint = torch.load(filename)
+    """
+    Load the model and optimizer state from a checkpoint.
+    
+    Parameters:
+        model: The model to load the state into.
+        optimizer: The optimizer to load the state into.
+        filename: Path to the checkpoint file.
+    
+    Returns:
+        epoch: int - Last trained epoch.
+        loss: float - The saved loss value (either train or validation loss).
+    """
+    checkpoint = torch.load(filename, map_location=torch.device('cpu'))  # Garantir compatibilidade com diferentes dispositivos
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
     epoch = checkpoint['epoch']
-    train_losses = checkpoint['train_losses']
-    valid_losses = checkpoint['valid_losses']
-    return epoch, train_losses, valid_losses
+    loss = checkpoint['loss']  # Pegando o único valor de loss salvo
+    
+    # Print the loaded checkpoint information
+    print(f"Checkpoint loaded from epoch {epoch} with loss {loss:.4f}.")
+    
+    return epoch, loss
 
 
 def get_mean_std(loader):

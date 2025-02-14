@@ -36,6 +36,9 @@ class HPAClassifier(nn.Module):
 
         self.model.conv1 = new_conv  # Substitui a camada antiga pela nova
 
+        # Print the model architecture
+        print(self.model)
+
     def forward(self, x):
         return self.model(x)
 

@@ -105,10 +105,10 @@ def train_model(
     # Define the loss function
     if class_weights:
         class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
-        criterion = nn.CrossEntropyLoss(weight=class_weights_tensor.to(device)) 
+        criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights_tensor.to(device))
         print("\nUsing class weights")
     else:
-        criterion = nn.CrossEntropyLoss()
+        criterion = nn.BCEWithLogitsLoss()
         print("\nNot using class weights")
 
     # Put the model on the device

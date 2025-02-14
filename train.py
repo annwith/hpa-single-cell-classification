@@ -38,7 +38,8 @@ def train_epoch(
     for batch_idx, (inputs, labels) in enumerate(progress_bar):
         inputs, labels = inputs.to(device), labels.to(device)  # Move data to device
 
-        outputs = model(inputs)  # Forward pass
+        outputs = model(inputs)  # Forward pass [Those are raw logits - I think so...]
+
         loss = criterion(outputs, labels)  # Compute loss
         loss = loss / accumulate_steps  # Normalize loss for accumulation
         loss.backward()  # Compute gradients
@@ -57,8 +58,6 @@ def train_epoch(
                 "lr": lr,
                 "train_loss": running_loss / accumulate_steps
             })
-            print(f"Epoch {epoch+1}/{epochs}, Batch {batch_idx+1}/{len(train_loader)}, Loss: {running_loss / accumulate_steps}")
-            print(f"Learning rate: {lr}")
 
             # Update progress bar
             progress_bar.set_postfix({'train loss': running_loss / accumulate_steps})

@@ -57,9 +57,11 @@ def train_epoch(
                 "lr": lr,
                 "train_loss": running_loss / accumulate_steps
             })
+            print(f"Epoch {epoch+1}/{epochs}, Batch {batch_idx+1}/{len(train_loader)}, Loss: {running_loss / accumulate_steps}")
+            print(f"Learning rate: {lr}")
 
             # Update progress bar
-            progress_bar.set_postfix({'train loss': running_loss / accumulate_steps, 'lr': lr})
+            progress_bar.set_postfix({'train loss': running_loss / accumulate_steps})
 
             running_loss = 0.0  # Reset loss accumulator
             scheduler.step()  # Adjust learning rate

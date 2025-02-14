@@ -19,7 +19,7 @@ class HPAClassifier(nn.Module):
             state_dict = torch.load(pretrained_weights_path, map_location=device)
             self.model.load_state_dict(state_dict)
 
-            print("✅ Pretrained weights loaded successfully!")
+            print("\nPretrained weights loaded successfully!")
 
         # Adjust first convolutional layer to take 4-channel input
         first_layer = self.model.conv1  # Works for ResNet

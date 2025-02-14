@@ -43,7 +43,8 @@ def evaluate(
             loss = criterion(outputs, labels)
             running_loss += loss.item()
 
-            preds = torch.argmax(outputs, dim=1)
+            preds = (torch.sigmoid(outputs) > 0.5).float()
+
             metric_acc.update(preds, labels)
             metric_prec.update(preds, labels)
             metric_rec.update(preds, labels)

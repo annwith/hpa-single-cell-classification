@@ -121,59 +121,66 @@ def valid_transformations() -> transforms.Compose:
 
 
 def save_checkpoint(
+    epoch: int,
     model: nn.Module,
     optimizer: optim.Optimizer,
-    epoch: int,
-    loss: float,
-    filename: str):
+    filename: str,
+    scheduler: optim.lr_scheduler.LRScheduler = None
+):
     """
     Save the model checkpoint to the specified file.
-    
+
     Parameters:
-        model: The model to save.
-        optimizer: The optimizer used in training.
-        epoch: The current epoch.
-        loss: The loss (could be train or validation loss).
-        filename: Path to save the checkpoint.
+        epoch (int): The current epoch.
+        model (nn.Module): The model to save.
+        optimizer (optim.Optimizer): The optimizer used in training.
+        filename (str): Path to save the checkpoint.
+        scheduler (optim.lr_scheduler.LRScheduler, optional): The LR scheduler.
     """
-    torch.save({
+    checkpoint = {
         'epoch': epoch,
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
-        'loss': loss
-    }, filename)
+        'scheduler_state_dict': scheduler.state_dict() if scheduler else None
+    }
 
-    # Print the saved checkpoint information
-    print(f"Checkpoint saved at epoch {epoch} with loss {loss:.4f}.")
+    torch.save(checkpoint, filename)
+    print(f"Checkpoint saved at epoch {epoch} -> {filename}")
 
-
+  
 def load_checkpoint(
     model: nn.Module,
     optimizer: optim.Optimizer,
-    filename: str = "checkpoint.pth"
+    filename: str,
+    device: torch.device,
+    scheduler: optim.lr_scheduler.LRScheduler = None
 ):
     """
-    Load the model and optimizer state from a checkpoint.
-    
+    Load the model, optimizer, and scheduler state from a checkpoint.
+
     Parameters:
-        model: The model to load the state into.
-        optimizer: The optimizer to load the state into.
-        filename: Path to the checkpoint file.
-    
+        model (nn.Module): The model to load the state into.
+        optimizer (optim.Optimizer): The optimizer to load the state into.
+        filename (str): Path to the checkpoint file.
+        device (torch.device): Device to map the checkpoint to.
+        scheduler (optim.lr_scheduler.LRScheduler, optional): The scheduler.
+
     Returns:
-        epoch: int - Last trained epoch.
-        loss: float - The saved loss value (either train or validation loss).
+        int: Last trained epoch.
     """
-    checkpoint = torch.load(filename, map_location=torch.device('cpu'))  # Garantir compatibilidade com diferentes dispositivos
+    checkpoint = torch.load(filename, map_location=device)
+
     model.load_state_dict(checkpoint['model_state_dict'])
     optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+
+    if scheduler and checkpoint['scheduler_state_dict']:
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+
     epoch = checkpoint['epoch']
-    loss = checkpoint['loss']  # Pegando o único valor de loss salvo
     
-    # Print the loaded checkpoint information
-    print(f"Checkpoint loaded from epoch {epoch} with loss {loss:.4f}.")
-    
-    return epoch, loss
+    print(f"Checkpoint loaded from epoch {epoch} -> {filename}")
+
+    return epoch
 
 
 def get_mean_std(loader):

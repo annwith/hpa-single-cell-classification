@@ -171,10 +171,12 @@ def train_model(
 
     # Resume from checkpoint if provided
     if resume_checkpoint_path:
-        start_epoch, _ = load_checkpoint(
+        start_epoch = load_checkpoint(
             model=model,
             optimizer=optimizer,
-            filename=resume_checkpoint_path)
+            filename=resume_checkpoint_path,
+            device=device,
+            scheduler=scheduler)
 
     # Training loop for each epoch
     for epoch in range(start_epoch, epochs):  # Loop through all epochs
@@ -214,10 +216,13 @@ def train_model(
         print_metrics(valid_metrics, mode="valid")
 
         # Save the model to W&B
-        wandb.save(f'checkpoint_epoch_{epoch}.pth')  # Save model to W&B
-
-    # Log the final model after training
-    wandb.save('final_model.pth')
+        save_checkpoint(
+            epoch=epoch,
+            model=model,
+            optimizer=optimizer,
+            filename=f'{save_checkpoint_path}/checkpoint_epoch_{epoch}.pth',
+            scheduler=scheduler)
+        wandb.save(f'{save_checkpoint_path}/checkpoint_epoch_{epoch}.pth')  # Save model to W&B
 
     # Finish the W&B run
     wandb.finish()

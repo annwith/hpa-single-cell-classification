@@ -39,7 +39,7 @@ LEARNING_RATE=0.01
 
 # Model parameters
 ARCHITECTURE="resnet50"
-PRETRAINED_WEIGHTS_PATH=none
+PRETRAINED_WEIGHTS_PATH=/home/lovelace/proj/proj1018/jmidlej/hpa-single-cell-classification/weights/resnet50_imagenet_weights.pth
 
 # Dataset parameters
 DATASET_NAME="kaggle_joined_resized"

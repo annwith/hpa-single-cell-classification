@@ -35,7 +35,7 @@ PIP=pip       # path to PIP
 EPOCHS=5
 BATCH_SIZE=16
 ACCUMULATE_STEPS=4
-LEARNING_RATE=0.1
+LEARNING_RATE=0.01
 
 # Model parameters
 ARCHITECTURE="resnet50"
@@ -55,19 +55,19 @@ SAVE_CHECKPOINT_PATH="/home/lovelace/proj/proj1018/jmidlej/checkpoints/resnet_ch
 
 # WandB parameters
 WANDB_PROJECT="hpa-single-cell-classification"
-WANDB_ENTITY="jmidlej"
+WANDB_ENTITY="lerdl"
 WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-$BATCH_SIZE-$ACCUMULATE_STEPS-$LEARNING_RATE-$(date +'%Y.%m.%d_%H:%M:%S')
 WANDB_MODE="offline"
 
 echo "WandB run name: $WANDB_RUN_NAME"
 
 # Train the model
-train () {
+train_model () {
     echo "\n=================================================================="
     echo "[train started at $(date +'%Y-%m-%d %H:%M:%S')]."
     echo "==================================================================\n"
 
-    $PY $WORK_DIR/train.py \
+    $PY $WORK_DIR/main.py \
     --dataset_channels $DATASET_CHANNELS \
     --dataset_path $DATASET_PATH \
     --labels_path $LABELS_PATH \
@@ -86,4 +86,4 @@ train () {
     --wandb_mode $WANDB_MODE
 }
 
-train
+train_model

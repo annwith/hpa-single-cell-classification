@@ -24,9 +24,9 @@ PIP=pip       # path to PIP
 # $PIP install -r requirements.txt
 
 # Training parameters
-EPOCHS=5
+EPOCHS=1
 BATCH_SIZE=4
-ACCUMULATE_STEPS=1
+ACCUMULATE_STEPS=8
 LEARNING_RATE=0.01
 
 # Model parameters
@@ -47,19 +47,19 @@ SAVE_CHECKPOINT_PATH="/mnt/ssd/checkpoints/resnet_checkpoint.pth"
 
 # WandB parameters
 WANDB_PROJECT="hpa-single-cell-classification"
-WANDB_ENTITY="jmidlej"
+WANDB_ENTITY="lerdl"
 WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-$BATCH_SIZE-$ACCUMULATE_STEPS-$LEARNING_RATE-$(date +'%Y.%m.%d_%H:%M:%S')
 WANDB_MODE="offline"
 
 echo "WandB run name: $WANDB_RUN_NAME"
 
 # Train the model
-train () {
+train_model () {
     echo "\n=================================================================="
     echo "[train started at $(date +'%Y-%m-%d %H:%M:%S')]."
     echo "==================================================================\n"
 
-    $PY $WORK_DIR/train.py \
+    $PY $WORK_DIR/main.py \
     --dataset_channels $DATASET_CHANNELS \
     --dataset_path $DATASET_PATH \
     --labels_path $LABELS_PATH \
@@ -78,4 +78,4 @@ train () {
     --wandb_mode $WANDB_MODE
 }
 
-train
+train_model

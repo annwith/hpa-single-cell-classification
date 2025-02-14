@@ -16,6 +16,37 @@ from train import train_epoch
 from evaluate import evaluate
 
 
+def print_metrics(metrics: dict, mode: str):
+    """
+    Pretty prints the evaluation metrics.
+
+    Args:
+        metrics: Dictionary with loss, accuracy, precision, recall, and F1-score.
+        mode: "train" or "valid" to indicate which phase the metrics belong to.
+    """
+    print("\n" + "=" * 50)
+    print(f"📊 {mode.capitalize()} Metrics")
+    print("=" * 50)
+    
+    # Print overall metrics
+    print(f"🟢 Loss:        {metrics['loss']:.4f}")
+    print(f"🔵 Accuracy:    {metrics['accuracy']:.4%}")
+    print(f"🟠 Precision:   {metrics['precision']:.4%}")
+    print(f"🟣 Recall:      {metrics['recall']:.4%}")
+    print(f"⚪ F1 Score:    {metrics['f1']:.4%}")
+
+    print("\n📌 Per-Class Metrics:")
+    num_classes = len(metrics["accuracy_per_class"])
+    print("-" * 50)
+    print(f"{'Class':<8} {'Acc':<10} {'Prec':<10} {'Rec':<10} {'F1':<10}")
+    print("-" * 50)
+
+    for i in range(num_classes):
+        print(f"{i:<8} {metrics['accuracy_per_class'][i]:<10.4f} {metrics['precision_per_class'][i]:<10.4f} {metrics['recall_per_class'][i]:<10.4f} {metrics['f1_per_class'][i]:<10.4f}")
+
+    print("=" * 50 + "\n")
+
+
 def train_model(
     dataset_channels: int,
     dataset_path: str,
@@ -169,8 +200,8 @@ def train_model(
             epoch=epoch,
             mode="train",
             wandb=wandb)
-        print(f"\nTrain metrics: {train_metrics}")
-        
+        print_metrics(train_metrics, mode="train")
+
         # Evaluate the model on the validation set
         valid_metrics = evaluate(
             model=model,
@@ -180,16 +211,8 @@ def train_model(
             epoch=epoch,
             mode="valid",
             wandb=wandb)
-        print(f"\nValid metrics: {valid_metrics}")
+        print_metrics(valid_metrics, mode="valid")
 
-        # Save checkpoint after every epoch
-        save_checkpoint(
-            model=model,
-            optimizer=optimizer,
-            epoch=epoch,
-            loss=valid_loss,
-            filename=save_checkpoint_path)
-        
         # Save the model to W&B
         wandb.save(f'checkpoint_epoch_{epoch}.pth')  # Save model to W&B
 

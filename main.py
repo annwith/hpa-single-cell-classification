@@ -9,42 +9,12 @@ import torch.backends.cudnn as cudnn
 import wandb
 
 from utils import save_checkpoint, load_checkpoint, \
-    train_valid_split_multilabel, train_transformations, valid_transformations
+    train_valid_split_multilabel, train_transformations, valid_transformations, \
+    print_metrics
 from dataset import HPADatasetFourChannelsImages
 from models import HPAClassifier
 from train import train_epoch
 from evaluate import evaluate
-
-
-def print_metrics(metrics: dict, mode: str):
-    """
-    Pretty prints the evaluation metrics.
-
-    Args:
-        metrics: Dictionary with loss, accuracy, precision, recall, and F1-score.
-        mode: "train" or "valid" to indicate which phase the metrics belong to.
-    """
-    print("\n" + "=" * 50)
-    print(f"📊 {mode.capitalize()} Metrics")
-    print("=" * 50)
-    
-    # Print overall metrics
-    print(f"🟢 Loss:        {metrics['loss']:.4f}")
-    print(f"🔵 Accuracy:    {metrics['accuracy']:.4%}")
-    print(f"🟠 Precision:   {metrics['precision']:.4%}")
-    print(f"🟣 Recall:      {metrics['recall']:.4%}")
-    print(f"⚪ F1 Score:    {metrics['f1']:.4%}")
-
-    print("\n📌 Per-Class Metrics:")
-    num_classes = len(metrics["accuracy_per_class"])
-    print("-" * 50)
-    print(f"{'Class':<8} {'Acc':<10} {'Prec':<10} {'Rec':<10} {'F1':<10}")
-    print("-" * 50)
-
-    for i in range(num_classes):
-        print(f"{i:<8} {metrics['accuracy_per_class'][i]:<10.4f} {metrics['precision_per_class'][i]:<10.4f} {metrics['recall_per_class'][i]:<10.4f} {metrics['f1_per_class'][i]:<10.4f}")
-
-    print("=" * 50 + "\n")
 
 
 def train_model(
@@ -192,7 +162,7 @@ def train_model(
             epochs=epochs,
             accumulate_steps=accumulate_steps,
             wandb=wandb)
-            
+        
         # Evaluate the model on the training set
         train_metrics = evaluate(
             model=model,
@@ -202,7 +172,7 @@ def train_model(
             epoch=epoch,
             mode="train",
             wandb=wandb)
-        print_metrics(train_metrics, mode="train")
+        print_metrics(train_metrics, mode="train") 
 
         # Evaluate the model on the validation set
         valid_metrics = evaluate(

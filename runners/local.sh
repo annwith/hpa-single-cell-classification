@@ -39,7 +39,8 @@ DATASET_CHANNELS=4
 DATASET_PATH="/mnt/ssd/hpa-single-cell-image-classification/join_resized_train"
 LABELS_PATH="/mnt/ssd/hpa-single-cell-image-classification/train.csv"
 
-CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
+# CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
+CLASS_WEIGHTS=none
 
 # Checkpoint parameters
 RESUME_CHECKPOINT_PATH=none

@@ -33,15 +33,15 @@ def evaluate(
     num_classes = 19
 
     # Initialize overall and per-class metrics
-    metric_acc = Accuracy(task="multiclass", num_classes=num_classes, average="macro").to(device)
-    metric_prec = Precision(task="multiclass", num_classes=num_classes, average="macro").to(device)
-    metric_rec = Recall(task="multiclass", num_classes=num_classes, average="macro").to(device)
-    metric_f1 = F1Score(task="multiclass", num_classes=num_classes, average="macro").to(device)
+    metric_acc = Accuracy(task="multilabel", num_labels=num_classes, average="macro").to(device)
+    metric_prec = Precision(task="multilabel", num_labels=num_classes, average="macro").to(device)
+    metric_rec = Recall(task="multilabel", num_labels=num_classes, average="macro").to(device)
+    metric_f1 = F1Score(task="multilabel", num_labels=num_classes, average="macro").to(device)
 
-    metric_acc_per_class = Accuracy(task="multiclass", num_classes=num_classes, average="none").to(device)
-    metric_prec_per_class = Precision(task="multiclass", num_classes=num_classes, average=None).to(device)
-    metric_rec_per_class = Recall(task="multiclass", num_classes=num_classes, average=None).to(device)
-    metric_f1_per_class = F1Score(task="multiclass", num_classes=num_classes, average=None).to(device)
+    metric_acc_per_class = Accuracy(task="multilabel", num_labels=num_classes, average="none").to(device)
+    metric_prec_per_class = Precision(task="multilabel", num_labels=num_classes, average=None).to(device)
+    metric_rec_per_class = Recall(task="multilabel", num_labels=num_classes, average=None).to(device)
+    metric_f1_per_class = F1Score(task="multilabel", num_labels=num_classes, average=None).to(device)
 
     with torch.no_grad():
         progress_bar = tqdm(dataloader, desc=f'{mode.capitalize()} Evaluation', unit='batch')
@@ -89,13 +89,6 @@ def evaluate(
         f"{mode}_recall": recall,
         f"{mode}_f1": f1
     }
-
-    # Add per-class metrics
-    for i in range(num_classes):
-        metrics_dict[f"{mode}_accuracy_class_{i}"] = accuracy_per_class[i]
-        metrics_dict[f"{mode}_precision_class_{i}"] = precision_per_class[i]
-        metrics_dict[f"{mode}_recall_class_{i}"] = recall_per_class[i]
-        metrics_dict[f"{mode}_f1_class_{i}"] = f1_per_class[i]
 
     wandb.log(metrics_dict)
 

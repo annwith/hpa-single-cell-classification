@@ -39,6 +39,7 @@ class HPADataset():
         self,
         images_dir: str,
         labels_csv: str,
+        publichpa_labels_csv: tp.Optional[str] = None,
         indices: tp.Optional[tp.List[int]] = None,
         transform: tp.Optional[transforms.Compose] = None,
     ):
@@ -58,23 +59,19 @@ class HPADataset():
         self.images_dir = images_dir
         self.transform = transform
 
-        # Listar todos os arquivos no diretório
-        self.filenames = os.listdir(self.images_dir)
-
-        # Extrair a parte do nome do arquivo antes do primeiro "_"
-        self.filenames = [filename.split("_")[0] for filename in self.filenames]
-
-        # Remover duplicatas
-        self.filenames = list(set(self.filenames))
-
-        # Ordenar a lista de arquivos
-        self.filenames.sort()
-
         # Carregar o arquivo CSV com os rótulos
         self.labels = pd.read_csv(labels_csv).set_index("ID")
 
-        # Ordenar os rótulos de acordo com a ordem dos arquivos
-        self.labels = self.labels.loc[self.filenames]
+        # Se o arquivo CSV com os rótulos do publichpa for fornecido, carregar
+        if publichpa_labels_csv is not None:
+            # Load
+            self.publichpa_labels = pd.read_csv(publichpa_labels_csv).set_index("ID")
+
+            # Drop Image LabelName Cellline in_trainset columns
+            self.publichpa_labels = self.publichpa_labels.drop(columns=['Image', 'LabelName', 'Cellline', 'in_trainset'])
+
+            # Join the dataframes
+            self.labels = pd.concat([self.labels, self.publichpa_labels], axis=0)
 
         # Converter a coluna 'Label' de strings para listas de inteiros
         self.labels['Label'] = self.labels['Label'].apply(lambda x: list(map(int, x.split('|'))))
@@ -89,7 +86,7 @@ class HPADataset():
 
         # Se índices são fornecidos, selecionar apenas esses índices
         if indices is not None:
-            self.filenames = [self.filenames[i] for i in indices]
+            self.labels = self.labels.iloc[indices]
             self.binary_labels = self.binary_labels[indices]
 
     def __len__(self) -> int:
@@ -99,7 +96,7 @@ class HPADataset():
             int
                 The number of images in the dataset.
         '''
-        return len(self.filenames)
+        return len(self.labels)
 
     def __getitem__(self, idx) -> tp.Tuple[torch.Tensor, torch.Tensor]:
         '''
@@ -114,10 +111,10 @@ class HPADataset():
         # Checar se o índice é válido
         if idx >= self.__len__():
             raise IndexError
-        
+
         # Pegar todas a imagens
         colors = ["_green", "_blue", "_red", "_yellow"]
-        images = [read_image(os.path.join(self.images_dir, self.filenames[idx] + color + ".png")) for color in colors]
+        images = [read_image(os.path.join(self.images_dir, self.labels.index[idx] + color + ".png")) for color in colors]
         image = torch.cat(images, 0)
 
         # Aplicar transformações
@@ -147,6 +144,7 @@ class HPADatasetFourChannelsImages():
         self,
         images_dir: str,
         labels_csv: str,
+        publichpa_labels_csv: tp.Optional[str] = None,
         indices: tp.Optional[tp.List[int]] = None,
         transform: tp.Optional[transforms.Compose] = None,
     ):

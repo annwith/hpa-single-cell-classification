@@ -14,6 +14,7 @@ def train_valid_split_multilabel(
     hpa_dataset_class: tp.Type[HPADataset],
     dataset_dir: str,
     labels_csv: str,
+    publichpa_labels_csv: tp.Optional[str] = None,
     train_transform: tp.Optional[transforms.Compose] = None,
     valid_transform: tp.Optional[transforms.Compose] = None,
     test_size=0.25,
@@ -28,6 +29,8 @@ def train_valid_split_multilabel(
             The directory where the images are stored.
         labels_csv: str
             Path to the CSV file containing labels.
+        publichpa_labels_csv: Optional[str]
+            Path to the CSV file containing the labels from the publichpa dataset.
         train_transform: Optional[transforms.Compose]
             If not None, the images in the training set will be transformed.
         valid_transform: Optional[transforms.Compose]
@@ -41,8 +44,13 @@ def train_valid_split_multilabel(
     '''
 
     # Carregar o dataset completo
-    dataset = hpa_dataset_class(images_dir=dataset_dir, labels_csv=labels_csv)
+    dataset = hpa_dataset_class(
+        images_dir=dataset_dir, 
+        labels_csv=labels_csv,
+        publichpa_labels_csv=publichpa_labels_csv)
     dataset_size = len(dataset)
+
+    print(f"Total samples: {dataset_size}")
 
     # Obter os índices de todas as amostras
     indices = list(range(dataset_size))
@@ -64,12 +72,14 @@ def train_valid_split_multilabel(
     train_dataset = hpa_dataset_class(
         images_dir=dataset_dir,
         labels_csv=labels_csv,
+        publichpa_labels_csv=publichpa_labels_csv,
         indices=train_indices,
         transform=train_transform)
 
     valid_dataset = hpa_dataset_class(
         images_dir=dataset_dir,
         labels_csv=labels_csv,
+        publichpa_labels_csv=publichpa_labels_csv,
         indices=valid_indices,
         transform=valid_transform)
     

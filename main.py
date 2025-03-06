@@ -11,7 +11,7 @@ import wandb
 from utils import save_checkpoint, load_checkpoint, \
     train_valid_split_multilabel, train_transformations, valid_transformations, \
     print_metrics
-from dataset import HPADatasetFourChannelsImages
+from dataset import HPADataset, HPADatasetFourChannelsImages
 from models import HPAClassifier
 from train import train_epoch
 from evaluate import evaluate
@@ -21,6 +21,7 @@ def train_model(
     dataset_channels: int,
     dataset_path: str,
     labels_path: str,
+    publichpa_labels_path: str,
     class_weights: tp.Optional[tp.List[float]],
     architecture: str,
     pretrained_weights_path: tp.Optional[str],
@@ -42,6 +43,7 @@ def train_model(
     - dataset_channels: Number of dataset channels
     - dataset_path: Path to the dataset directory
     - labels_path: Path to the CSV file with labels
+    - publichpa_labels_path: Path to the CSV file with labels
     - class_weights: Class weights
     - architecture: Model architecture
     - pretrained_weights_path: Path to the pre-trained weights
@@ -57,25 +59,34 @@ def train_model(
     - wandb_mode: wandb mode
     """
 
-    if dataset_channels != 4:
-        print("Only 4 channels dataset is supported")
-        raise ValueError("Only 4 channels dataset is supported")
-    
-    print("\nDataset information:")
-    # Load the dataset
-    train, valid = train_valid_split_multilabel(
-        hpa_dataset_class=HPADatasetFourChannelsImages,
-        dataset_dir=dataset_path,
-        labels_csv=labels_path,
-        train_transform=train_transformations(),
-        valid_transform=valid_transformations(),
-        test_size=0.10,
-    )
+    if dataset_channels == 1:
+        # Load the dataset
+        train, valid = train_valid_split_multilabel(
+            hpa_dataset_class=HPADataset,
+            dataset_dir=dataset_path,
+            labels_csv=labels_path,
+            publichpa_labels_csv=publichpa_labels_path,
+            train_transform=train_transformations(),
+            valid_transform=valid_transformations(),
+            test_size=0.10,
+        )
+    elif dataset_channels == 4:
+        # Load the dataset
+        train, valid = train_valid_split_multilabel(
+            hpa_dataset_class=HPADatasetFourChannelsImages,
+            dataset_dir=dataset_path,
+            labels_csv=labels_path,
+            train_transform=train_transformations(),
+            valid_transform=valid_transformations(),
+            test_size=0.10,
+        )
+    else:
+        raise ValueError("Invalid number of dataset channels")
 
     # Print the number of samples in the train and valid datasets
-    print(f"\nTrain dataset: {len(train)} samples")
+    print("\nDataset size information:")
+    print(f"Train dataset: {len(train)} samples")
     print(f"Valid dataset: {len(valid)} samples")
-    print(f"Shape: {train[0][0].shape}")
 
     # Create the data loaders
     train_loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=True)
@@ -204,6 +215,7 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_channels', type=int, default=4, help='Number of dataset channels')
     parser.add_argument('--dataset_path', type=str, required=True, help='Dataset directory')
     parser.add_argument('--labels_path', type=str, required=True, help='Path to the CSV file with labels')
+    parser.add_argument('--publichpa_labels_path', type=str, required=True, help='Path to the CSV file with labels')
     parser.add_argument('--class_weights', type=str, default=None, help="Comma-separated list of class weights")
     parser.add_argument('--architecture', type=str, default='resnet50', help='Model architecture')
     parser.add_argument('--pretrained_weights_path', type=str, default=None, help='Path to the pre-trained weights')
@@ -231,6 +243,7 @@ if __name__ == "__main__":
     print(f"{'Dataset Channels:':<25} {args.dataset_channels}")
     print(f"{'Dataset Path:':<25} {args.dataset_path}")
     print(f"{'Labels Path:':<25} {args.labels_path}")
+    print(f"{'PublicHPA Labels Path:':<25} {args.publichpa_labels_path}")
     print(f"{'Class Weights:':<25} {args.class_weights}")
     
     print(f"{'Architecture:':<25} {args.architecture}")
@@ -262,6 +275,7 @@ if __name__ == "__main__":
         dataset_channels=args.dataset_channels,
         dataset_path=args.dataset_path,
         labels_path=args.labels_path,
+        publichpa_labels_path=args.publichpa_labels_path,
         class_weights=class_weights_list,
         architecture=args.architecture,
         pretrained_weights_path=args.pretrained_weights_path,

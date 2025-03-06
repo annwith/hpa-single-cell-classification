@@ -5,6 +5,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.transforms.v2 as transforms
+
+from tqdm import tqdm
 from sklearn.model_selection import train_test_split
 
 from dataset import HPADataset, classes_map
@@ -112,7 +114,7 @@ def train_transformations() -> transforms.Compose:
     return transforms.Compose([
         transforms.ToImage(), # Transformar de tensor para imagem
         transforms.ToDtype(torch.float32, scale=True),
-        transforms.Normalize(mean=[0.0807, 0.0804, 0.0538, 0.0522], std=[0.1233, 0.1273, 0.1422, 0.0818])
+        transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
     ])
 
 
@@ -126,7 +128,7 @@ def valid_transformations() -> transforms.Compose:
     return transforms.Compose([
         transforms.ToImage(), # Transformar de tensor para imagem
         transforms.ToDtype(torch.float32, scale=True),
-        transforms.Normalize(mean=[0.0807, 0.0804, 0.0538, 0.0522], std=[0.1233, 0.1273, 0.1422, 0.0818])
+        transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
     ])
 
 
@@ -193,31 +195,35 @@ def load_checkpoint(
     return epoch
 
 
-def get_mean_std(loader):
+def compute_mean_std(loader):
     """
-    Calcula a média e o desvio padrão dos canais de um DataLoader.
+    Computes the mean and standard deviation of image channels (RGBY) in a DataLoader.
 
-    Parâmetros:
-        loader: DataLoader - DataLoader com as imagens a serem calculadas a média e desvio padrão
+    Parameters:
+        loader: DataLoader - DataLoader with images to compute mean and std
 
-    Retorna:
-        mean: torch.Tensor - Média dos canais
-        std: torch.Tensor - Desvio padrão dos canais
+    Returns:
+        mean: torch.Tensor - Mean per channel (4 values for RGBY)
+        std: torch.Tensor - Standard deviation per channel (4 values for RGBY)
     """
+    num_channels = 4  # RGBY
+    mean = torch.zeros(num_channels)
+    std = torch.zeros(num_channels)
+    total_samples = 0
 
-    mean = 0.0
-    std = 0.0
-    nb_samples = 0
+    for data, _ in tqdm(loader, desc="Computing mean and std"):
+        batch_samples = data.size(0)  # Number of images in batch
+        total_samples += batch_samples
 
-    for data, _ in loader:
-        batch_samples = data.size(0)  # Número de imagens no batch
-        data = data.view(batch_samples, data.size(1), -1)  # (batch, canais, width * height)
-        mean += data.mean(2).sum(0)  # Média por canal
-        std += data.std(2).sum(0)    # Desvio padrão por canal
-        nb_samples += batch_samples
+        # Compute batch mean and std over all pixels
+        batch_mean = data.mean(dim=[0, 2, 3])  # Mean over (batch, height, width)
+        batch_std = data.std(dim=[0, 2, 3])  # Std over (batch, height, width)
 
-    mean /= nb_samples
-    std /= nb_samples
+        mean += batch_mean * batch_samples  # Weighted sum
+        std += batch_std ** 2 * batch_samples  # Variance accumulation
+
+    mean /= total_samples
+    std = torch.sqrt(std / total_samples)  # Convert accumulated variance to std
 
     return mean, std
 

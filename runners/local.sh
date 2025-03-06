@@ -34,13 +34,17 @@ ARCHITECTURE="resnet50"
 PRETRAINED_WEIGHTS_PATH=none
 
 # Dataset parameters
-DATASET_NAME="publichpa"
-DATASET_CHANNELS=1
-#DATASET_PATH="/mnt/ssd/hpa-single-cell-image-classification/join_resized_train"
-#LABELS_PATH="/mnt/ssd/hpa-single-cell-image-classification/train.csv"
-DATASET_PATH="/mnt/ssd/hpa-single-cell/train"
-LABELS_PATH="/mnt/ssd/hpa-single-cell/train.csv"
-PUBLICHPA_LABELS_PATH="/mnt/ssd/hpa-single-cell/publichpa.csv"
+DATASET_NAME="kaggle_joined_resized"
+DATASET_CHANNELS=4
+DATASET_PATH="/mnt/ssd/hpa-single-cell-image-classification/join_resized_train"
+LABELS_PATH="/mnt/ssd/hpa-single-cell-image-classification/train.csv"
+PUBLICHPA_LABELS_PATH=none
+
+# DATASET_NAME="publichpa"
+# DATASET_CHANNELS=1
+# DATASET_PATH="/mnt/ssd/hpa-single-cell/train"
+# LABELS_PATH="/mnt/ssd/hpa-single-cell/train.csv"
+# PUBLICHPA_LABELS_PATH="/mnt/ssd/hpa-single-cell/publichpa.csv"
 
 # CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
 CLASS_WEIGHTS=none

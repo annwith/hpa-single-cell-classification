@@ -17,8 +17,8 @@ unset CUDA_VISIBLE_DEVICES
 module load python/3.8.11-gcc-9.4.0
 
 # Activate virtual environment if it exists
-echo "Activating virtual environment... ($HOME/dev/bin/activate)"
-source $HOME/dev/bin/activate
+echo "Activating virtual environment... ($HOME/hpa-single-cell-classification/dev/bin/activate)"
+source $HOME/hpa-single-cell-classification/dev/bin/activate
 
 # Navigate to the working directory
 cd $WORK_DIR
@@ -34,7 +34,7 @@ PIP=pip       # path to PIP
 # Training parameters
 EPOCHS=5
 BATCH_SIZE=16
-ACCUMULATE_STEPS=4
+ACCUMULATE_STEPS=2
 LEARNING_RATE=0.01
 
 # Model parameters
@@ -46,6 +46,7 @@ PRETRAINED_WEIGHTS_PATH=/home/lovelace/proj/proj1018/jmidlej/hpa-single-cell-cla
 # DATASET_CHANNELS=4
 # DATASET_PATH="/home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train"
 # LABELS_PATH="/home/lovelace/proj/proj1018/jmidlej/datasets/train.csv"
+# PUBLICHPA_LABELS_PATH=none
 
 DATASET_NAME="publichpa"
 DATASET_CHANNELS=1

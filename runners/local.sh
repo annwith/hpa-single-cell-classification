@@ -35,7 +35,7 @@ ARCHITECTURE="resnet50"
 PRETRAINED_WEIGHTS_PATH=none
 
 # Dataset parameters
-DATASET_NAME="kaggle_joined_resized"
+DATASET_NAME="kaggle"
 DATASET_CHANNELS=4
 DATASET_PATH="/mnt/ssd/hpa-single-cell-image-classification/join_resized_train"
 LABELS_PATH="/mnt/ssd/hpa-single-cell-image-classification/train.csv"
@@ -57,9 +57,10 @@ RESUME_CHECKPOINT_PATH=none
 SAVE_CHECKPOINT_PATH="/mnt/ssd/checkpoints"
 
 # WandB parameters
+EID=1
 WANDB_PROJECT="hpa-single-cell-classification"
 WANDB_ENTITY="lerdl"
-WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-b$BATCH_SIZE-acc$ACCUMULATE_STEPS-lr$LEARNING_RATE-$OPTIMIZER_NAME-$(date +'%Y.%m.%d_%H:%M:%S')
+WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-b$BATCH_SIZE-acc$ACCUMULATE_STEPS-lr$LEARNING_RATE-$OPTIMIZER_NAME-eid$EID-$(date +'%Y%m%d')
 WANDB_MODE="offline"
 
 echo "WandB run name: $WANDB_RUN_NAME"

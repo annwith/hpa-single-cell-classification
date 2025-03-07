@@ -236,14 +236,16 @@ def train_model(
             wandb=wandb)
         print_metrics(valid_metrics, mode="valid")
 
-        # Save the model to W&B
+        # Save the model
         save_checkpoint(
             epoch=epoch,
             model=model,
             optimizer=optimizer,
-            filename=f'{save_checkpoint_path}/checkpoint_epoch_{epoch}.pth',
+            filename=f'{save_checkpoint_path}/{wandb_run_name}.pth',
             scheduler=scheduler)
-        wandb.save(f'{save_checkpoint_path}/checkpoint_epoch_{epoch}.pth')  # Save model to W&B
+        
+        # Save the model to W&B
+        wandb.save(f'{save_checkpoint_path}/{wandb_run_name}.pth')  # Save model to W&B
 
     # Finish the W&B run
     wandb.finish()

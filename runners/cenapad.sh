@@ -43,7 +43,7 @@ ARCHITECTURE="resnet50"
 PRETRAINED_WEIGHTS_PATH=/home/lovelace/proj/proj1018/jmidlej/hpa-single-cell-classification/weights/resnet50_imagenet_weights.pth
 
 # Dataset parameters
-# DATASET_NAME="kaggle_joined_resized"
+# DATASET_NAME="kaggle"
 # DATASET_CHANNELS=4
 # DATASET_PATH="/home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train"
 # LABELS_PATH="/home/lovelace/proj/proj1018/jmidlej/datasets/train.csv"
@@ -64,9 +64,10 @@ RESUME_CHECKPOINT_PATH=none
 SAVE_CHECKPOINT_PATH="/home/lovelace/proj/proj1018/jmidlej/checkpoints"
 
 # WandB parameters
+EID=1
 WANDB_PROJECT="hpa-single-cell-classification"
 WANDB_ENTITY="lerdl"
-WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-b$BATCH_SIZE-acc$ACCUMULATE_STEPS-lr$LEARNING_RATE-$OPTIMIZER_NAME-$(date +'%Y.%m.%d_%H:%M:%S')
+WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-b$BATCH_SIZE-acc$ACCUMULATE_STEPS-lr$LEARNING_RATE-$OPTIMIZER_NAME-eid$EID-$(date +'%Y%m%d')
 WANDB_MODE="offline"
 
 echo "WandB run name: $WANDB_RUN_NAME"

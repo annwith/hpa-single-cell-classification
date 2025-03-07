@@ -17,11 +17,48 @@ from train import train_epoch
 from evaluate import evaluate
 
 
+def select_optimizer(
+    optimizer_name: str, 
+    model: nn.Module, 
+    learning_rate: float
+) -> tp.Union[optim.Adam, optim.AdamW, optim.SGD]:
+    """
+    Select the optimizer based on the given name.
+
+    Parameters:
+    - optimizer_name: Name of the optimizer
+    - model: Model
+    - learning_rate: Learning rate
+
+    Returns:
+    - Optimizer
+    """
+    
+    if optimizer_name == "adam":
+        optimizer = optim.Adam(
+            model.parameters(),
+            lr=learning_rate)
+    elif optimizer_name == "adamw":
+        optimizer = optim.AdamW(
+            model.parameters(),
+            lr=learning_rate)
+    elif optimizer_name == "sgd":
+        optimizer = optim.SGD(
+            model.parameters(),
+            lr=learning_rate,
+            momentum=0.9)
+    else:
+        raise ValueError("Invalid optimizer")
+    
+    return optimizer
+
+
 def train_model(
     dataset_channels: int,
     dataset_path: str,
     labels_path: str,
     publichpa_labels_path: str,
+    image_normalization: str,
     class_weights: tp.Optional[tp.List[float]],
     architecture: str,
     pretrained_weights_path: tp.Optional[str],
@@ -29,6 +66,7 @@ def train_model(
     epochs: int,
     accumulate_steps: int,
     learning_rate: float,
+    optimizer_name: str,
     save_checkpoint_path: str,
     resume_checkpoint_path: tp.Optional[str] = None,
     wandb_project_name: str = 'hpa-project',
@@ -51,6 +89,7 @@ def train_model(
     - epochs: Number of epochs to train the model
     - accumulate_steps: Number of batches to accumulate gradients before updating weights
     - learning_rate: Learning rate
+    - optimizer_name: Optimizer
     - save_checkpoint_path: Path to save the checkpoint
     - resume_checkpoint_path: Path to the checkpoint to resume training
     - wandb_project_name: wandb project name
@@ -66,8 +105,8 @@ def train_model(
             dataset_dir=dataset_path,
             labels_csv=labels_path,
             publichpa_labels_csv=publichpa_labels_path,
-            train_transform=train_transformations(),
-            valid_transform=valid_transformations(),
+            train_transform=train_transformations(image_normalization),
+            valid_transform=valid_transformations(image_normalization),
             test_size=0.10,
         )
     elif dataset_channels == 4:
@@ -76,8 +115,8 @@ def train_model(
             hpa_dataset_class=HPADatasetFourChannelsImages,
             dataset_dir=dataset_path,
             labels_csv=labels_path,
-            train_transform=train_transformations(),
-            valid_transform=valid_transformations(),
+            train_transform=train_transformations(image_normalization),
+            valid_transform=valid_transformations(image_normalization),
             test_size=0.10,
         )
     else:
@@ -100,9 +139,10 @@ def train_model(
         in_channels=4)
 
     # Define the optimizer
-    optimizer = optim.Adam(
-        model.parameters(),
-        lr=learning_rate)
+    optimizer = select_optimizer(
+        optimizer_name=optimizer_name,
+        model=model,
+        learning_rate=learning_rate)
 
     # Define the learning rate scheduler
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
@@ -216,6 +256,7 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_path', type=str, required=True, help='Dataset directory')
     parser.add_argument('--labels_path', type=str, required=True, help='Path to the CSV file with labels')
     parser.add_argument('--publichpa_labels_path', type=str, required=True, help='Path to the CSV file with labels')
+    parser.add_argument('--image_normalization', type=str, default='imagenet', help='Image normalizer')
     parser.add_argument('--class_weights', type=str, default=None, help="Comma-separated list of class weights")
     parser.add_argument('--architecture', type=str, default='resnet50', help='Model architecture')
     parser.add_argument('--pretrained_weights_path', type=str, default=None, help='Path to the pre-trained weights')
@@ -223,6 +264,7 @@ if __name__ == "__main__":
     parser.add_argument('--batch_size', type=int, default=64, help='Batch size')
     parser.add_argument('--accumulate_steps', type=int, default=1, help='Number of batches to accumulate gradients before updating weights')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate')
+    parser.add_argument('--optimizer_name', type=str, default='adam', help='Optimizer')
     parser.add_argument('--save_checkpoint_path', type=str, default='checkpoint.pth', help='Path to save the checkpoint')
     parser.add_argument('--resume_checkpoint_path', type=str, default=None, help='Path to the checkpoint to resume training')
     parser.add_argument('--wandb_project_name', type=str, default='hpa-project', help='wandb project name')
@@ -244,6 +286,7 @@ if __name__ == "__main__":
     print(f"{'Dataset Path:':<25} {args.dataset_path}")
     print(f"{'Labels Path:':<25} {args.labels_path}")
     print(f"{'PublicHPA Labels Path:':<25} {args.publichpa_labels_path}")
+    print(f"{'Image Normalization:':<25} {args.image_normalization}")
     print(f"{'Class Weights:':<25} {args.class_weights}")
     
     print(f"{'Architecture:':<25} {args.architecture}")
@@ -253,6 +296,7 @@ if __name__ == "__main__":
     print(f"{'Batch Size:':<25} {args.batch_size}")
     print(f"{'Accumulate Steps:':<25} {args.accumulate_steps}")
     print(f"{'Learning Rate:':<25} {args.learning_rate}")
+    print(f"{'Optimizer Name:':<25} {args.optimizer_name}")
 
     print(f"{'Save Checkpoint Path:':<25} {args.save_checkpoint_path}")
     print(f"{'Resume Checkpoint Path:':<25} {args.resume_checkpoint_path if args.resume_checkpoint_path else 'None'}")
@@ -276,6 +320,7 @@ if __name__ == "__main__":
         dataset_path=args.dataset_path,
         labels_path=args.labels_path,
         publichpa_labels_path=args.publichpa_labels_path,
+        image_normalization=args.image_normalization,
         class_weights=class_weights_list,
         architecture=args.architecture,
         pretrained_weights_path=args.pretrained_weights_path,
@@ -283,6 +328,7 @@ if __name__ == "__main__":
         batch_size=args.batch_size,
         accumulate_steps=args.accumulate_steps,
         learning_rate=args.learning_rate,
+        optimizer_name=args.optimizer_name,
         save_checkpoint_path=args.save_checkpoint_path,
         resume_checkpoint_path=args.resume_checkpoint_path,
         wandb_project_name=args.wandb_project_name,

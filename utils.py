@@ -104,32 +104,60 @@ def train_valid_split_multilabel(
     return train_dataset, valid_dataset
 
 
-def train_transformations() -> transforms.Compose:
+def train_transformations(image_normalization: str) -> transforms.Compose:
     '''
     Returns a composition of transformations to be applied to the training images.
     Returns:
         transforms.Compose
             The composition of transformations.
     '''
-    return transforms.Compose([
-        transforms.ToImage(), # Transformar de tensor para imagem
-        transforms.ToDtype(torch.float32, scale=True),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
-    ])
+    if image_normalization == "imagenet":
+        return transforms.Compose([
+            transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.ToDtype(torch.float32, scale=True),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.485], std=[0.229, 0.224, 0.225, 0.229])
+        ])
+    elif image_normalization == "basic-0.5":
+        return transforms.Compose([
+            transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.ToDtype(torch.float32, scale=True),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
+        ])
+    elif image_normalization == "divide-255":
+        return transforms.Compose([
+            transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.ToDtype(torch.float32, scale=True)
+        ])
+    else:
+        raise ValueError(f"Unknown image normalizer: {image_normalization}")
 
 
-def valid_transformations() -> transforms.Compose:
+def valid_transformations(image_normalization: str) -> transforms.Compose:
     '''
     Returns a composition of transformations to be applied to the validation images.
     Returns:
         transforms.Compose
             The composition of transformations.
     '''
-    return transforms.Compose([
-        transforms.ToImage(), # Transformar de tensor para imagem
-        transforms.ToDtype(torch.float32, scale=True),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
-    ])
+    if image_normalization == "imagenet":
+        return transforms.Compose([
+            transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.ToDtype(torch.float32, scale=True),
+            transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.485], std=[0.229, 0.224, 0.225, 0.229])
+        ])
+    elif image_normalization == "basic-0.5":
+        return transforms.Compose([
+            transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.ToDtype(torch.float32, scale=True),
+            transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
+        ])
+    elif image_normalization == "divide-255":
+        return transforms.Compose([
+            transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.ToDtype(torch.float32, scale=True)
+        ])
+    else:
+        raise ValueError(f"Unknown image normalizer: {image_normalization}")
 
 
 def save_checkpoint(

@@ -28,6 +28,7 @@ EPOCHS=1
 BATCH_SIZE=4
 ACCUMULATE_STEPS=8
 LEARNING_RATE=0.01
+OPTIMIZER_NAME="adam"
 
 # Model parameters
 ARCHITECTURE="resnet50"
@@ -39,12 +40,14 @@ DATASET_CHANNELS=4
 DATASET_PATH="/mnt/ssd/hpa-single-cell-image-classification/join_resized_train"
 LABELS_PATH="/mnt/ssd/hpa-single-cell-image-classification/train.csv"
 PUBLICHPA_LABELS_PATH=none
+IMAGE_NORMALIZATION="basic-0.5"
 
 # DATASET_NAME="publichpa"
 # DATASET_CHANNELS=1
 # DATASET_PATH="/mnt/ssd/hpa-single-cell/train"
 # LABELS_PATH="/mnt/ssd/hpa-single-cell/train.csv"
 # PUBLICHPA_LABELS_PATH="/mnt/ssd/hpa-single-cell/publichpa.csv"
+# IMAGE_NORMALIZATION="basic-0.5"
 
 # CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
 CLASS_WEIGHTS=none
@@ -56,7 +59,7 @@ SAVE_CHECKPOINT_PATH="/mnt/ssd/checkpoints"
 # WandB parameters
 WANDB_PROJECT="hpa-single-cell-classification"
 WANDB_ENTITY="lerdl"
-WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-$BATCH_SIZE-$ACCUMULATE_STEPS-$LEARNING_RATE-$(date +'%Y.%m.%d_%H:%M:%S')
+WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-b$BATCH_SIZE-acc$ACCUMULATE_STEPS-lr$LEARNING_RATE-$OPTIMIZER_NAME-$(date +'%Y.%m.%d_%H:%M:%S')
 WANDB_MODE="offline"
 
 echo "WandB run name: $WANDB_RUN_NAME"
@@ -72,6 +75,7 @@ train_model () {
     --dataset_path $DATASET_PATH \
     --labels_path $LABELS_PATH \
     --publichpa_labels_path $PUBLICHPA_LABELS_PATH \
+    --image_normalization $IMAGE_NORMALIZATION \
     --class_weights $CLASS_WEIGHTS \
     --architecture $ARCHITECTURE \
     --pretrained_weights_path $PRETRAINED_WEIGHTS_PATH \
@@ -79,6 +83,7 @@ train_model () {
     --batch_size $BATCH_SIZE \
     --accumulate_steps $ACCUMULATE_STEPS \
     --learning_rate $LEARNING_RATE \
+    --optimizer_name $OPTIMIZER_NAME \
     --save_checkpoint_path $SAVE_CHECKPOINT_PATH \
     --resume_checkpoint_path $RESUME_CHECKPOINT_PATH \
     --wandb_project $WANDB_PROJECT \

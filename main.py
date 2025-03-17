@@ -128,8 +128,16 @@ def train_model(
     print(f"Valid dataset: {len(valid)} samples")
 
     # Create the data loaders
-    train_loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=True)
-    valid_loader = torch.utils.data.DataLoader(valid, batch_size=batch_size, shuffle=False)
+    train_loader = torch.utils.data.DataLoader(
+        train, 
+        batch_size=batch_size, 
+        num_workers=4,
+        shuffle=True)
+    valid_loader = torch.utils.data.DataLoader(
+        valid, 
+        batch_size=batch_size, 
+        num_workers=4,
+        shuffle=False)
 
     # Load the model
     model = HPAClassifier(

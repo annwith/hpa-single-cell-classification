@@ -114,18 +114,21 @@ def train_transformations(image_normalization: str) -> transforms.Compose:
     if image_normalization == "imagenet":
         return transforms.Compose([
             transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.Resize((512, 512)),
             transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.485], std=[0.229, 0.224, 0.225, 0.229])
         ])
     elif image_normalization == "basic-0.5":
         return transforms.Compose([
             transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.Resize((512, 512)),
             transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
         ])
     elif image_normalization == "divide-255":
         return transforms.Compose([
             transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.Resize((512, 512)),
             transforms.ToDtype(torch.float32, scale=True)
         ])
     else:
@@ -142,18 +145,21 @@ def valid_transformations(image_normalization: str) -> transforms.Compose:
     if image_normalization == "imagenet":
         return transforms.Compose([
             transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.Resize((512, 512)),
             transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.485], std=[0.229, 0.224, 0.225, 0.229])
         ])
     elif image_normalization == "basic-0.5":
         return transforms.Compose([
             transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.Resize((512, 512)),
             transforms.ToDtype(torch.float32, scale=True),
             transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
         ])
     elif image_normalization == "divide-255":
         return transforms.Compose([
             transforms.ToImage(), # Transformar de tensor para imagem
+            transforms.Resize((512, 512)),
             transforms.ToDtype(torch.float32, scale=True)
         ])
     else:

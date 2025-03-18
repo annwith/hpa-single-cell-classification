@@ -40,6 +40,7 @@ BATCH_SIZE=32
 ACCUMULATE_STEPS=1
 LEARNING_RATE=0.01
 OPTIMIZER_NAME=sgd
+SCHEDULER_ETA_MIN=0.0001
 
 # Model parameters
 ARCHITECTURE=resnet50
@@ -57,8 +58,7 @@ DATASET_NAME=publichpa
 DATASET_CHANNELS=1
 DATASET_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/train
 LABELS_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/train.csv
-# PUBLICHPA_LABELS_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/publichpa.csv
-PUBLICHPA_LABELS_PATH=none
+PUBLICHPA_LABELS_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/publichpa.csv
 IMAGE_NORMALIZATION=imagenet
 
 CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
@@ -96,6 +96,7 @@ train_model () {
     --accumulate_steps $ACCUMULATE_STEPS \
     --learning_rate $LEARNING_RATE \
     --optimizer_name $OPTIMIZER_NAME \
+    --scheduler_eta_min $SCHEDULER_ETA_MIN \
     --save_checkpoint_path $SAVE_CHECKPOINT_PATH \
     --resume_checkpoint_path $RESUME_CHECKPOINT_PATH \
     --wandb_project $WANDB_PROJECT \

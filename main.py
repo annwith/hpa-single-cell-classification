@@ -67,6 +67,7 @@ def train_model(
     accumulate_steps: int,
     learning_rate: float,
     optimizer_name: str,
+    scheduler_eta_min: float = 1e-6,
     save_checkpoint_path: str,
     resume_checkpoint_path: tp.Optional[str] = None,
     wandb_project_name: str = 'hpa-project',
@@ -156,7 +157,7 @@ def train_model(
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
         T_max=epochs * len(train_loader),
-        eta_min=1e-6)  # Smooth decay
+        eta_min=scheduler_eta_min)  # Smooth decay
 
     # Set the device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -275,6 +276,7 @@ if __name__ == "__main__":
     parser.add_argument('--accumulate_steps', type=int, default=1, help='Number of batches to accumulate gradients before updating weights')
     parser.add_argument('--learning_rate', type=float, default=0.001, help='Learning rate')
     parser.add_argument('--optimizer_name', type=str, default='adam', help='Optimizer')
+    parser.add_argument('--scheduler_eta_min', type=float, default=1e-6, help='Minimum learning rate for the scheduler')
     parser.add_argument('--save_checkpoint_path', type=str, default='checkpoint.pth', help='Path to save the checkpoint')
     parser.add_argument('--resume_checkpoint_path', type=str, default=None, help='Path to the checkpoint to resume training')
     parser.add_argument('--wandb_project_name', type=str, default='hpa-project', help='wandb project name')
@@ -307,6 +309,7 @@ if __name__ == "__main__":
     print(f"{'Accumulate Steps:':<25} {args.accumulate_steps}")
     print(f"{'Learning Rate:':<25} {args.learning_rate}")
     print(f"{'Optimizer Name:':<25} {args.optimizer_name}")
+    print(f"{'Scheduler Eta Min:':<25} {args.scheduler_eta_min}")
 
     print(f"{'Save Checkpoint Path:':<25} {args.save_checkpoint_path}")
     print(f"{'Resume Checkpoint Path:':<25} {args.resume_checkpoint_path if args.resume_checkpoint_path else 'None'}")
@@ -339,6 +342,7 @@ if __name__ == "__main__":
         accumulate_steps=args.accumulate_steps,
         learning_rate=args.learning_rate,
         optimizer_name=args.optimizer_name,
+        scheduler_eta_min=args.scheduler_eta_min,
         save_checkpoint_path=args.save_checkpoint_path,
         resume_checkpoint_path=args.resume_checkpoint_path,
         wandb_project_name=args.wandb_project_name,

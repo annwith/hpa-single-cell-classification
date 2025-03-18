@@ -54,9 +54,23 @@ def train_epoch(
             # Log metrics to W&B
             lr = scheduler.get_last_lr()[0]
             wandb.log({
-                "epoch": epoch + 1,
-                "lr": lr,
-                "train_loss": running_loss / accumulate_steps
+                "train/epoch": epoch + 1,
+                "train/lr": lr,
+                "train/train_loss": running_loss / accumulate_steps
+            })
+
+            # Log GPU metrics
+            gpu_memory_allocated = torch.cuda.memory_allocated()
+            gpu_memory_reserved = torch.cuda.memory_reserved()
+            gpu_utilization = torch.cuda.utilization(0)  # Requires PyTorch 2.0+
+
+            # Calculate percentage
+            gpu_memory_percent = (gpu_memory_allocated / gpu_memory_reserved) * 100 if gpu_memory_reserved > 0 else 0
+
+            wandb.log({
+                "System/GPU Memory Allocated (Bytes)": gpu_memory_allocated,
+                "System/GPU Memory Allocated (%)": gpu_memory_percent,
+                "System/GPU Time Spent Accessing Memory (%)": gpu_utilization
             })
 
             # Update progress bar

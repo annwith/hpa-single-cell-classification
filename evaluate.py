@@ -82,12 +82,12 @@ def evaluate(
 
     # Log metrics to W&B
     metrics_dict = {
-        "epoch": epoch + 1,
-        f"{mode}_loss": loss_avg,
-        f"{mode}_accuracy": accuracy,
-        f"{mode}_precision": precision,
-        f"{mode}_recall": recall,
-        f"{mode}_f1": f1
+        f"{mode}/epoch": epoch + 1,
+        f"{mode}/{mode}_loss": loss_avg,
+        f"{mode}/{mode}_accuracy": accuracy,
+        f"{mode}/{mode}_precision": precision,
+        f"{mode}/{mode}_recall": recall,
+        f"{mode}/{mode}_f1": f1
     }
 
     wandb.log(metrics_dict)

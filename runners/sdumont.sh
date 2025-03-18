@@ -1,25 +1,32 @@
 #!/bin/bash
 #SBATCH --nodes=1
 #SBATCH --ntasks-per-node=48
+#SBATCH --gpus=1
 #SBATCH -p sequana_gpu_dev
-#SBATCH -J hpa-test
-#SBATCH -o /scratch/lerdl/zanoni.dias/logs/hpa-single-cell-classification/%j-hpa-project.out
+#SBATCH -J hpa-pubhpa
+#SBATCH -o /scratch/lerdl/zanoni.dias/hpa-single-cell-classification/logs/%j-hpa-project.out
+#SBATCH -e /scratch/lerdl/zanoni.dias/hpa-single-cell-classification/logs/%j-hpa-project.err
 #SBATCH --time=00:20:00
 
 #
 # Train a model to perform multilabel classification.
 #
 
-# export OMP_NUM_THREADS=4
+echo $SLURM_JOB_NODELIST
 nodeset -e $SLURM_JOB_NODELIST
-# module load sequana/current
-module load gcc/7.4_sequana python/3.8.2_sequana cudnn/8.2_cuda-11.1_sequana
 
 WORK_DIR=$SCRATCH/hpa-single-cell-classification
 
 # Navigate to the working directory
 cd $WORK_DIR
 echo "Working directory: $(pwd)"
+
+# Load python module
+module load gcc/9.3_sequana python/3.10.16_sequana cudnn/8.2_cuda-11.1_sequana
+
+# Activate virtual environment if it exists
+echo "Activating virtual environment... ($SCRATCH/hpa-single-cell-classification/dev/bin/activate)"
+source $SCRATCH/hpa-single-cell-classification/dev/bin/activate
 
 # Set up the environment
 PY=python3     # path to python
@@ -29,50 +36,51 @@ PIP=pip       # path to PIP
 
 # Training parameters
 EPOCHS=5
-BATCH_SIZE=16
-ACCUMULATE_STEPS=2
+BATCH_SIZE=32
+ACCUMULATE_STEPS=1
 LEARNING_RATE=0.01
-OPTIMIZER_NAME="sgd"
+OPTIMIZER_NAME=sgd
 
 # Model parameters
-ARCHITECTURE="resnet50"
-PRETRAINED_WEIGHTS_PATH=/scratch/lerdl/zanoni.dias/hpa-single-cell-classification/weights/resnet50_imagenet_weights.pth
+ARCHITECTURE=resnet50
+PRETRAINED_WEIGHTS_PATH=$WORK_DIR/weights/resnet50_imagenet_weights.pth
 
 # Dataset parameters
-# DATASET_NAME="kaggle"
+# DATASET_NAME=kaggle
 # DATASET_CHANNELS=4
-# DATASET_PATH="/home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train"
-# LABELS_PATH="/home/lovelace/proj/proj1018/jmidlej/datasets/train.csv"
+# DATASET_PATH=/home/lovelace/proj/proj1018/jmidlej/datasets/kaggle_joined_resized_train
+# LABELS_PATH=/home/lovelace/proj/proj1018/jmidlej/datasets/train.csv
 # PUBLICHPA_LABELS_PATH=none
-# IMAGE_NORMALIZATION="imagenet"
+# IMAGE_NORMALIZATION=imagenet
 
-DATASET_NAME="publichpa"
+DATASET_NAME=publichpa
 DATASET_CHANNELS=1
-DATASET_PATH="/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/train"
-LABELS_PATH="/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/train.csv"
-PUBLICHPA_LABELS_PATH="/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/publichpa.csv"
-IMAGE_NORMALIZATION="imagenet"
+DATASET_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/train
+LABELS_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/train.csv
+# PUBLICHPA_LABELS_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/publichpa.csv
+PUBLICHPA_LABELS_PATH=none
+IMAGE_NORMALIZATION=imagenet
 
 CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
 
 # Checkpoint parameters
 RESUME_CHECKPOINT_PATH=none
-SAVE_CHECKPOINT_PATH="/scratch/lerdl/zanoni.dias/checkpoints"
+SAVE_CHECKPOINT_PATH=$WORK_DIR/checkpoints
 
 # WandB parameters
-EID=1
-WANDB_PROJECT="hpa-single-cell-classification"
-WANDB_ENTITY="lerdl"
+EID=7
+WANDB_PROJECT=hpa-single-cell-classification
+WANDB_ENTITY=lerdl
 WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-b$BATCH_SIZE-acc$ACCUMULATE_STEPS-lr$LEARNING_RATE-$OPTIMIZER_NAME-eid$EID-$(date +'%Y%m%d')
-WANDB_MODE="offline"
+WANDB_MODE=offline
 
 echo "WandB run name: $WANDB_RUN_NAME"
 
 # Train the model
 train_model () {
-    echo "\n=================================================================="
+    echo "=================================================================="
     echo "[train started at $(date +'%Y-%m-%d %H:%M:%S')]."
-    echo "==================================================================\n"
+    echo "=================================================================="
 
     $PY $WORK_DIR/main.py \
     --dataset_channels $DATASET_CHANNELS \

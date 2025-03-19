@@ -14,7 +14,7 @@ from utils import save_checkpoint, load_checkpoint, \
 from dataset import HPADataset, HPADatasetFourChannelsImages
 from models import HPAClassifier
 from train import train_epoch
-from evaluate import evaluate
+from evaluate import evaluate, predict
 
 
 def select_optimizer(
@@ -67,7 +67,7 @@ def train_model(
     accumulate_steps: int,
     learning_rate: float,
     optimizer_name: str,
-    scheduler_eta_min: float = 1e-6,
+    scheduler_eta_min: float,
     save_checkpoint_path: str,
     resume_checkpoint_path: tp.Optional[str] = None,
     wandb_project_name: str = 'hpa-project',
@@ -208,53 +208,65 @@ def train_model(
             device=device,
             scheduler=scheduler)
 
-    # Training loop for each epoch
-    for epoch in range(start_epoch, epochs):  # Loop through all epochs
-        # Train the model for one epoch
-        train_epoch(
-            model=model,
-            train_loader=train_loader,
-            criterion=criterion,
-            optimizer=optimizer,
-            scheduler=scheduler,
-            device=device,
-            epoch=epoch,
-            epochs=epochs,
-            accumulate_steps=accumulate_steps,
-            wandb=wandb)
+    # # Training loop for each epoch
+    # for epoch in range(start_epoch, epochs):  # Loop through all epochs
+    #     # Train the model for one epoch
+    #     train_epoch(
+    #         model=model,
+    #         train_loader=train_loader,
+    #         criterion=criterion,
+    #         optimizer=optimizer,
+    #         scheduler=scheduler,
+    #         device=device,
+    #         epoch=epoch,
+    #         epochs=epochs,
+    #         accumulate_steps=accumulate_steps,
+    #         wandb=wandb)
         
-        # Evaluate the model on the training set
-        train_metrics = evaluate(
-            model=model,
-            criterion=criterion,
-            dataloader=train_loader,
-            device=device,
-            epoch=epoch,
-            mode="train",
-            wandb=wandb)
-        print_metrics(train_metrics, mode="train") 
+    #     # Evaluate the model on the training set
+    #     train_metrics = evaluate(
+    #         model=model,
+    #         criterion=criterion,
+    #         dataloader=train_loader,
+    #         device=device,
+    #         epoch=epoch,
+    #         mode="train",
+    #         wandb=wandb)
+    #     print_metrics(train_metrics, mode="train") 
 
-        # Evaluate the model on the validation set
-        valid_metrics = evaluate(
-            model=model,
-            criterion=criterion,
-            dataloader=valid_loader,
-            device=device,
-            epoch=epoch,
-            mode="valid",
-            wandb=wandb)
-        print_metrics(valid_metrics, mode="valid")
+    #     # Evaluate the model on the validation set
+    #     valid_metrics = evaluate(
+    #         model=model,
+    #         criterion=criterion,
+    #         dataloader=valid_loader,
+    #         device=device,
+    #         epoch=epoch,
+    #         mode="valid",
+    #         wandb=wandb)
+    #     print_metrics(valid_metrics, mode="valid")
 
-        # Save the model
-        save_checkpoint(
-            epoch=epoch,
-            model=model,
-            optimizer=optimizer,
-            filename=f'{save_checkpoint_path}/{wandb_run_name}.pth',
-            scheduler=scheduler)
+    #     # Save the model
+    #     save_checkpoint(
+    #         epoch=epoch,
+    #         model=model,
+    #         optimizer=optimizer,
+    #         filename=f'{save_checkpoint_path}/{wandb_run_name}.pth',
+    #         scheduler=scheduler)
         
-        # Save the model to W&B
-        wandb.save(f'{save_checkpoint_path}/{wandb_run_name}.pth')  # Save model to W&B
+    #     # Save the model to W&B
+    #     wandb.save(f'{save_checkpoint_path}/{wandb_run_name}.pth')  # Save model to W&B
+
+    # Predict
+    predict(
+        model=model,
+        dataloader=train_loader,
+        device=device,
+        output_path="predictions/"+wandb_run_name+"-"+mode+".npz")
+    predict(
+        model=model,
+        dataloader=valid_loader,
+        device=device,
+        output_path="predictions/"+wandb_run_name+"-"+mode+".npz")
 
     # Finish the W&B run
     wandb.finish()

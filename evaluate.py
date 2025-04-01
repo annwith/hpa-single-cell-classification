@@ -2,6 +2,48 @@ import torch
 from torchmetrics.classification import Accuracy, Precision, Recall, F1Score
 from tqdm import tqdm
 
+
+import torch
+import numpy as np
+from tqdm import tqdm
+
+def predict(
+    model: torch.nn.Module,
+    dataloader: torch.utils.data.DataLoader,
+    device: torch.device,
+    output_file: str = "predictions"
+):
+    """
+    Predicts the labels for a given dataset and saves them to an NPZ file.
+
+    Args:
+        model: The neural network model.
+        dataloader: The DataLoader for the dataset.
+        device: The device to run prediction on (CPU/GPU).
+        output_file: The file to save the predictions.
+
+    Returns:
+        A NumPy array of logits.
+    """
+    model.eval()
+    sample_ids = []
+    logits_list = []
+
+    with torch.no_grad():
+        progress_bar = tqdm(dataloader, desc='Prediction', unit='batch')
+        for inputs, sample_id in progress_bar:  # Assuming dataloader returns sample_id
+            inputs = inputs.to(device)
+            outputs = model(inputs)  # Logits before sigmoid
+
+            sample_ids.extend(sample_id.cpu().numpy())  # Convert sample IDs to NumPy
+            logits_list.append(outputs.cpu().numpy())  # Convert logits to NumPy
+
+    logits = np.concatenate(logits_list, axis=0)
+
+    # Save to NPZ file
+    np.savez_compressed(f"{output_file}", sample_id=np.array(sample_ids), logits=logits)
+    
+
 def evaluate(
     model: torch.nn.Module,
     dataloader: torch.utils.data.DataLoader,

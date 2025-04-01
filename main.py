@@ -58,6 +58,7 @@ def train_model(
     dataset_path: str,
     labels_path: str,
     publichpa_labels_path: str,
+    data_augmentations: str,
     image_normalization: str,
     class_weights: tp.Optional[tp.List[float]],
     architecture: str,
@@ -83,6 +84,8 @@ def train_model(
     - dataset_path: Path to the dataset directory
     - labels_path: Path to the CSV file with labels
     - publichpa_labels_path: Path to the CSV file with labels
+    - data_augmentations: Data augmentations
+    - image_normalization: Image normalizer
     - class_weights: Class weights
     - architecture: Model architecture
     - pretrained_weights_path: Path to the pre-trained weights
@@ -106,8 +109,11 @@ def train_model(
             dataset_dir=dataset_path,
             labels_csv=labels_path,
             publichpa_labels_csv=publichpa_labels_path,
-            train_transform=train_transformations(image_normalization),
-            valid_transform=valid_transformations(image_normalization),
+            train_transform=train_transformations(
+                image_normalization=image_normalization, 
+                augmentations=data_augmentations),
+            valid_transform=valid_transformations(
+                image_normalization=image_normalization),
             test_size=0.10,
         )
     elif dataset_channels == 4:
@@ -116,8 +122,11 @@ def train_model(
             hpa_dataset_class=HPADatasetFourChannelsImages,
             dataset_dir=dataset_path,
             labels_csv=labels_path,
-            train_transform=train_transformations(image_normalization),
-            valid_transform=valid_transformations(image_normalization),
+            train_transform=train_transformations(
+                image_normalization=image_normalization,
+                augmentations=data_augmentations),
+            valid_transform=valid_transformations(
+                image_normalization=image_normalization),
             test_size=0.10,
         )
     else:
@@ -208,65 +217,65 @@ def train_model(
             device=device,
             scheduler=scheduler)
 
-    # # Training loop for each epoch
-    # for epoch in range(start_epoch, epochs):  # Loop through all epochs
-    #     # Train the model for one epoch
-    #     train_epoch(
-    #         model=model,
-    #         train_loader=train_loader,
-    #         criterion=criterion,
-    #         optimizer=optimizer,
-    #         scheduler=scheduler,
-    #         device=device,
-    #         epoch=epoch,
-    #         epochs=epochs,
-    #         accumulate_steps=accumulate_steps,
-    #         wandb=wandb)
+    # Training loop for each epoch
+    for epoch in range(start_epoch, epochs):  # Loop through all epochs
+        # Train the model for one epoch
+        train_epoch(
+            model=model,
+            train_loader=train_loader,
+            criterion=criterion,
+            optimizer=optimizer,
+            scheduler=scheduler,
+            device=device,
+            epoch=epoch,
+            epochs=epochs,
+            accumulate_steps=accumulate_steps,
+            wandb=wandb)
         
-    #     # Evaluate the model on the training set
-    #     train_metrics = evaluate(
-    #         model=model,
-    #         criterion=criterion,
-    #         dataloader=train_loader,
-    #         device=device,
-    #         epoch=epoch,
-    #         mode="train",
-    #         wandb=wandb)
-    #     print_metrics(train_metrics, mode="train") 
+        # Evaluate the model on the training set
+        train_metrics = evaluate(
+            model=model,
+            criterion=criterion,
+            dataloader=train_loader,
+            device=device,
+            epoch=epoch,
+            mode="train",
+            wandb=wandb)
+        print_metrics(train_metrics, mode="train") 
 
-    #     # Evaluate the model on the validation set
-    #     valid_metrics = evaluate(
-    #         model=model,
-    #         criterion=criterion,
-    #         dataloader=valid_loader,
-    #         device=device,
-    #         epoch=epoch,
-    #         mode="valid",
-    #         wandb=wandb)
-    #     print_metrics(valid_metrics, mode="valid")
+        # Evaluate the model on the validation set
+        valid_metrics = evaluate(
+            model=model,
+            criterion=criterion,
+            dataloader=valid_loader,
+            device=device,
+            epoch=epoch,
+            mode="valid",
+            wandb=wandb)
+        print_metrics(valid_metrics, mode="valid")
 
-    #     # Save the model
-    #     save_checkpoint(
-    #         epoch=epoch,
-    #         model=model,
-    #         optimizer=optimizer,
-    #         filename=f'{save_checkpoint_path}/{wandb_run_name}.pth',
-    #         scheduler=scheduler)
+        # Save the model
+        save_checkpoint(
+            epoch=epoch,
+            model=model,
+            optimizer=optimizer,
+            filename=f'{save_checkpoint_path}/{wandb_run_name}.pth',
+            scheduler=scheduler)
         
-    #     # Save the model to W&B
-    #     wandb.save(f'{save_checkpoint_path}/{wandb_run_name}.pth')  # Save model to W&B
+        # Save the model to W&B
+        wandb.save(f'{save_checkpoint_path}/{wandb_run_name}.pth')  # Save model to W&B
 
     # Predict
     predict(
         model=model,
         dataloader=train_loader,
         device=device,
-        output_path="predictions/"+wandb_run_name+"-"+mode+".npz")
+        output_file="predictions/"+wandb_run_name+"-train.npz")
     predict(
         model=model,
         dataloader=valid_loader,
         device=device,
-        output_path="predictions/"+wandb_run_name+"-"+mode+".npz")
+        output_file="predictions/"+wandb_run_name+"-valid.npz")
 
     # Finish the W&B run
     wandb.finish()
@@ -279,6 +288,7 @@ if __name__ == "__main__":
     parser.add_argument('--dataset_path', type=str, required=True, help='Dataset directory')
     parser.add_argument('--labels_path', type=str, required=True, help='Path to the CSV file with labels')
     parser.add_argument('--publichpa_labels_path', type=str, required=True, help='Path to the CSV file with labels')
+    parser.add_argument('--data_augmentations', type=str, default='', help='Data augmentations')
     parser.add_argument('--image_normalization', type=str, default='imagenet', help='Image normalizer')
     parser.add_argument('--class_weights', type=str, default=None, help="Comma-separated list of class weights")
     parser.add_argument('--architecture', type=str, default='resnet50', help='Model architecture')
@@ -310,6 +320,7 @@ if __name__ == "__main__":
     print(f"{'Dataset Path:':<25} {args.dataset_path}")
     print(f"{'Labels Path:':<25} {args.labels_path}")
     print(f"{'PublicHPA Labels Path:':<25} {args.publichpa_labels_path}")
+    print(f"{'Data Augmentations:':<25} {args.data_augmentations}")
     print(f"{'Image Normalization:':<25} {args.image_normalization}")
     print(f"{'Class Weights:':<25} {args.class_weights}")
     
@@ -325,6 +336,11 @@ if __name__ == "__main__":
 
     print(f"{'Save Checkpoint Path:':<25} {args.save_checkpoint_path}")
     print(f"{'Resume Checkpoint Path:':<25} {args.resume_checkpoint_path if args.resume_checkpoint_path else 'None'}")
+
+    print(f"{'Wandb Project Name:':<25} {args.wandb_project_name}")
+    print(f"{'Wandb Entity Name:':<25} {args.wandb_entity_name}")
+    print(f"{'Wandb Run Name:':<25} {args.wandb_run_name}")
+    print(f"{'Wandb Mode:':<25} {args.wandb_mode}")
 
     # Check if any argument is the string 'none'
     print("\nSetting the following arguments to None:")
@@ -345,6 +361,7 @@ if __name__ == "__main__":
         dataset_path=args.dataset_path,
         labels_path=args.labels_path,
         publichpa_labels_path=args.publichpa_labels_path,
+        data_augmentations=args.data_augmentations,
         image_normalization=args.image_normalization,
         class_weights=class_weights_list,
         architecture=args.architecture,

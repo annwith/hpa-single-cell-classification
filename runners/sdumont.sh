@@ -3,7 +3,7 @@
 #SBATCH --ntasks-per-node=48
 #SBATCH --gpus=1
 #SBATCH -p sequana_gpu_dev
-#SBATCH -J hpa-pubhpa
+#SBATCH -J pub
 #SBATCH -o /scratch/lerdl/zanoni.dias/hpa-single-cell-classification/logs/%j-hpa-project.out
 #SBATCH -e /scratch/lerdl/zanoni.dias/hpa-single-cell-classification/logs/%j-hpa-project.err
 #SBATCH --time=00:20:00
@@ -35,10 +35,10 @@ PIP=pip       # path to PIP
 # $PIP install -r requirements.txt
 
 # Training parameters
-EPOCHS=5
+EPOCHS=15
 BATCH_SIZE=32
 ACCUMULATE_STEPS=1
-LEARNING_RATE=0.01
+LEARNING_RATE=0.1
 OPTIMIZER_NAME=sgd
 SCHEDULER_ETA_MIN=0.0001
 
@@ -59,16 +59,19 @@ DATASET_CHANNELS=1
 DATASET_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/train
 LABELS_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/train.csv
 PUBLICHPA_LABELS_PATH=/scratch/lerdl/zanoni.dias/datasets/hpa-single-cell/publichpa.csv
+
+DATA_AUGMENTATIONS="cropresize_rotation_hflip_vflip_cutout"
 IMAGE_NORMALIZATION=imagenet
 
-CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
+# CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
+CLASS_WEIGHTS=none
 
 # Checkpoint parameters
 RESUME_CHECKPOINT_PATH=none
 SAVE_CHECKPOINT_PATH=$WORK_DIR/checkpoints
 
 # WandB parameters
-EID=7
+EID=9
 WANDB_PROJECT=hpa-single-cell-classification
 WANDB_ENTITY=lerdl
 WANDB_RUN_NAME=$DATASET_NAME-$ARCHITECTURE-b$BATCH_SIZE-acc$ACCUMULATE_STEPS-lr$LEARNING_RATE-$OPTIMIZER_NAME-eid$EID-$(date +'%Y%m%d')
@@ -87,6 +90,7 @@ train_model () {
     --dataset_path $DATASET_PATH \
     --labels_path $LABELS_PATH \
     --publichpa_labels_path $PUBLICHPA_LABELS_PATH \
+    --data_augmentations $DATA_AUGMENTATIONS \
     --image_normalization $IMAGE_NORMALIZATION \
     --class_weights $CLASS_WEIGHTS \
     --architecture $ARCHITECTURE \

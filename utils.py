@@ -1,5 +1,6 @@
 import numpy as np
 import typing as tp
+import random
 
 import torch
 import torch.nn as nn
@@ -8,8 +9,25 @@ import torchvision.transforms.v2 as transforms
 
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
+from PIL import Image
 
 from dataset import HPADataset, classes_map
+
+
+class Cutout:
+    """
+    Cutout augmentation for images.
+    """
+    def __init__(self, size=50):
+        self.size = size  # Tamanho do retângulo oculto
+
+    def __call__(self, img):
+        h, w = img.size
+        x = random.randint(0, w - self.size)
+        y = random.randint(0, h - self.size)
+        img = np.array(img)
+        img[y:y+self.size, x:x+self.size, :] = 0  # Define o patch para preto
+        return Image.fromarray(img)
 
 
 def train_valid_split_multilabel(
@@ -104,66 +122,109 @@ def train_valid_split_multilabel(
     return train_dataset, valid_dataset
 
 
-def train_transformations(image_normalization: str) -> transforms.Compose:
+def train_transformations(
+    image_normalization: str, 
+    augmentations: str) -> transforms.Compose:
     '''
     Returns a composition of transformations to be applied to the training images.
+
+    Parameters:
+        image_normalization: str
+            The type of normalization to be applied to the images.
+        augmentations: str
+            The type of augmentations to be applied to the images.
+
     Returns:
         transforms.Compose
             The composition of transformations.
     '''
-    if image_normalization == "imagenet":
-        return transforms.Compose([
-            transforms.ToImage(), # Transformar de tensor para imagem
-            transforms.Resize((512, 512)),
-            transforms.ToDtype(torch.float32, scale=True),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.485], std=[0.229, 0.224, 0.225, 0.229])
-        ])
-    elif image_normalization == "basic-0.5":
-        return transforms.Compose([
-            transforms.ToImage(), # Transformar de tensor para imagem
-            transforms.Resize((512, 512)),
-            transforms.ToDtype(torch.float32, scale=True),
-            transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
-        ])
-    elif image_normalization == "divide-255":
-        return transforms.Compose([
-            transforms.ToImage(), # Transformar de tensor para imagem
-            transforms.Resize((512, 512)),
-            transforms.ToDtype(torch.float32, scale=True)
-        ])
+
+    base_transforms = [
+        transforms.ToImage()
+    ]
+
+    # Check if crop and resize is in augmentations
+    if "cropresize" in augmentations:
+        base_transforms += [
+            transforms.RandomResizedCrop(512, scale=(0.8, 1.0))]
     else:
+        base_transforms += [
+            transforms.Resize((512, 512))]
+
+    # Define augmentation options
+    augmentation_options = {
+        "rotation": transforms.RandomRotation(degrees=45),
+        "hflip": transforms.RandomHorizontalFlip(p=0.5),
+        "vflip": transforms.RandomVerticalFlip(p=0.5),
+        "colorjitter": transforms.ColorJitter(
+            brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
+        "cutout": Cutout(size=50)
+    }
+
+    # Apply augmentations based on the input string
+    for key, transform in augmentation_options.items():
+        if key in augmentations:
+            base_transforms += [transform]
+
+    # Transform to tensor
+    base_transforms += [
+        transforms.ToDtype(torch.float32, scale=True)]
+    
+    normalization_options = {
+        "imagenet": ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        "basic-0.5": ([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+        "divide-255": None
+    }
+
+    if image_normalization not in normalization_options:
         raise ValueError(f"Unknown image normalizer: {image_normalization}")
+
+    # Apply normalization if specified
+    if normalization_options[image_normalization]:
+        mean, std = normalization_options[image_normalization]
+        base_transforms += [
+            transforms.Normalize(mean=mean, std=std)
+        ]
+
+    print(f"Train transformations: {base_transforms}")
+
+    return transforms.Compose(base_transforms)
 
 
 def valid_transformations(image_normalization: str) -> transforms.Compose:
     '''
     Returns a composition of transformations to be applied to the validation images.
+
+    Parameters:
+        image_normalization: str
+            The type of normalization to be applied to the images.
+
     Returns:
         transforms.Compose
             The composition of transformations.
     '''
-    if image_normalization == "imagenet":
-        return transforms.Compose([
-            transforms.ToImage(), # Transformar de tensor para imagem
-            transforms.Resize((512, 512)),
-            transforms.ToDtype(torch.float32, scale=True),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406, 0.485], std=[0.229, 0.224, 0.225, 0.229])
-        ])
-    elif image_normalization == "basic-0.5":
-        return transforms.Compose([
-            transforms.ToImage(), # Transformar de tensor para imagem
-            transforms.Resize((512, 512)),
-            transforms.ToDtype(torch.float32, scale=True),
-            transforms.Normalize(mean=[0.5, 0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5, 0.5])
-        ])
-    elif image_normalization == "divide-255":
-        return transforms.Compose([
-            transforms.ToImage(), # Transformar de tensor para imagem
-            transforms.Resize((512, 512)),
-            transforms.ToDtype(torch.float32, scale=True)
-        ])
-    else:
+    base_transforms = [
+        transforms.ToImage(),  # Convert tensor to image
+        transforms.Resize((512, 512)),
+        transforms.ToDtype(torch.float32, scale=True)
+    ]
+    
+    normalization_options = {
+        "imagenet": ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
+        "basic-0.5": ([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
+        "divide-255": None
+    }
+
+    if image_normalization not in normalization_options:
         raise ValueError(f"Unknown image normalizer: {image_normalization}")
+
+    if normalization_options[image_normalization]:
+        mean, std = normalization_options[image_normalization]
+        base_transforms.append(transforms.Normalize(mean=mean, std=std))
+
+    print(f"Validation transformations: {base_transforms}")
+
+    return transforms.Compose(base_transforms)
 
 
 def save_checkpoint(

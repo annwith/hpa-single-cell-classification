@@ -9,25 +9,61 @@ import torchvision.transforms.v2 as transforms
 
 from tqdm import tqdm
 from sklearn.model_selection import train_test_split
-from PIL import Image
 
 from dataset import HPADataset, classes_map
 
 
-class Cutout:
-    """
-    Cutout augmentation for images.
-    """
-    def __init__(self, size=50):
-        self.size = size  # Tamanho do retângulo oculto
+# Seed for reproducibility
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
+
+
+# Normalization options for images
+NORMALIZATION_OPTIONS = {
+    "imagenet": ([0.485, 0.456, 0.406, 0.485], [0.229, 0.224, 0.225, 0.229]),
+    "basic-0.5": ([0.5, 0.5, 0.5, 0.5], [0.5, 0.5, 0.5, 0.5]),
+    "divide-255": None
+}
+
+
+class ConditionalTransform:
+    def __init__(self, transform, probability=0.5):
+        self.transform = transform
+        self.probability = probability
 
     def __call__(self, img):
-        h, w = img.size
-        x = random.randint(0, w - self.size)
-        y = random.randint(0, h - self.size)
-        img = np.array(img)
-        img[y:y+self.size, x:x+self.size, :] = 0  # Define o patch para preto
-        return Image.fromarray(img)
+        if random.random() < self.probability:
+            return self.transform(img)
+        else:
+            return img
+
+
+class Cutout:
+    """
+    Cutout augmentation for images (C, H, W format).
+    """
+    def __init__(self, size=50):
+        self.size = size  # Size of the cutout square
+
+    def __call__(self, img):
+        if isinstance(img, torch.Tensor):
+            img = img.numpy()  # Convert to NumPy
+
+        if img.ndim == 3:  # Ensure (C, H, W) format
+            c, h, w = img.shape
+        else:
+            raise ValueError(f"Unexpected image shape: {img.shape}, expected (C, H, W)")
+
+        # Randomly select the top-left corner of the cutout
+        x = random.randint(0, max(0, w - self.size))
+        y = random.randint(0, max(0, h - self.size))
+
+        # Apply cutout across all channels
+        img[:, y:y+self.size, x:x+self.size] = 0  
+
+        return torch.tensor(img)  # Convert back to tensor
 
 
 def train_valid_split_multilabel(
@@ -151,14 +187,16 @@ def train_transformations(
         base_transforms += [
             transforms.Resize((512, 512))]
 
-    # Define augmentation options
+    # Define transformations
     augmentation_options = {
-        "rotation": transforms.RandomRotation(degrees=45),
+        "rotation": ConditionalTransform(
+            transforms.RandomRotation(degrees=45), probability=0.5),
         "hflip": transforms.RandomHorizontalFlip(p=0.5),
         "vflip": transforms.RandomVerticalFlip(p=0.5),
-        "colorjitter": transforms.ColorJitter(
-            brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),
-        "cutout": Cutout(size=50)
+        "colorjitter": ConditionalTransform(
+            transforms.ColorJitter(
+                brightness=0.2, contrast=0.2, saturation=0.2), probability=0.3),
+        "cutout": ConditionalTransform(Cutout(size=50), probability=0.3)
     }
 
     # Apply augmentations based on the input string
@@ -169,29 +207,26 @@ def train_transformations(
     # Transform to tensor
     base_transforms += [
         transforms.ToDtype(torch.float32, scale=True)]
-    
-    normalization_options = {
-        "imagenet": ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        "basic-0.5": ([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
-        "divide-255": None
-    }
 
-    if image_normalization not in normalization_options:
+    if image_normalization not in NORMALIZATION_OPTIONS:
         raise ValueError(f"Unknown image normalizer: {image_normalization}")
 
     # Apply normalization if specified
-    if normalization_options[image_normalization]:
-        mean, std = normalization_options[image_normalization]
+    if NORMALIZATION_OPTIONS[image_normalization]:
+        mean, std = NORMALIZATION_OPTIONS[image_normalization]
         base_transforms += [
             transforms.Normalize(mean=mean, std=std)
         ]
 
     print(f"Train transformations: {base_transforms}")
+    for transform in base_transforms:
+        print(f"- {transform.__class__.__name__}: {transform}")
 
     return transforms.Compose(base_transforms)
 
 
-def valid_transformations(image_normalization: str) -> transforms.Compose:
+def valid_transformations(
+    image_normalization: str) -> transforms.Compose:
     '''
     Returns a composition of transformations to be applied to the validation images.
 
@@ -209,20 +244,16 @@ def valid_transformations(image_normalization: str) -> transforms.Compose:
         transforms.ToDtype(torch.float32, scale=True)
     ]
     
-    normalization_options = {
-        "imagenet": ([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]),
-        "basic-0.5": ([0.5, 0.5, 0.5], [0.5, 0.5, 0.5]),
-        "divide-255": None
-    }
-
-    if image_normalization not in normalization_options:
+    if image_normalization not in NORMALIZATION_OPTIONS:
         raise ValueError(f"Unknown image normalizer: {image_normalization}")
 
-    if normalization_options[image_normalization]:
-        mean, std = normalization_options[image_normalization]
+    if NORMALIZATION_OPTIONS[image_normalization]:
+        mean, std = NORMALIZATION_OPTIONS[image_normalization]
         base_transforms.append(transforms.Normalize(mean=mean, std=std))
 
-    print(f"Validation transformations: {base_transforms}")
+    print("Validation transformations:")
+    for transform in base_transforms:
+        print(f"- {transform.__class__.__name__}: {transform}")
 
     return transforms.Compose(base_transforms)
 

@@ -1,8 +1,3 @@
-#PBS -N hpa-squeezenet
-#PBS -q testegpu
-#PBS -e hpa-squeezenet-errors.txt
-#PBS -o hpa-squeezenet-logs.txt
-
 #
 # Train a model to perform multilabel classification over a WSSS dataset.
 #
@@ -35,19 +30,23 @@ ARCHITECTURE="resnet50"
 PRETRAINED_WEIGHTS_PATH=none
 
 # Dataset parameters
-DATASET_NAME="kaggle"
-DATASET_CHANNELS=4
-DATASET_PATH="/mnt/ssd/hpa-single-cell-image-classification/join_resized_train"
-LABELS_PATH="/mnt/ssd/hpa-single-cell-image-classification/train.csv"
-PUBLICHPA_LABELS_PATH=none
-IMAGE_NORMALIZATION="basic-0.5"
+# DATASET_NAME="kaggle"
+# DATASET_CHANNELS=4
+# DATASET_PATH="/mnt/ssd/hpa-single-cell-image-classification/join_resized_train"
+# LABELS_PATH="/mnt/ssd/hpa-single-cell-image-classification/train.csv"
+# PUBLICHPA_LABELS_PATH=none
 
-# DATASET_NAME="publichpa"
-# DATASET_CHANNELS=1
-# DATASET_PATH="/mnt/ssd/hpa-single-cell/train"
-# LABELS_PATH="/mnt/ssd/hpa-single-cell/train.csv"
-# PUBLICHPA_LABELS_PATH="/mnt/ssd/hpa-single-cell/publichpa.csv"
-# IMAGE_NORMALIZATION="basic-0.5"
+# DATA_AUGMENTATIONS="cropresize_rotation_hflip_vflip_cutout"
+# IMAGE_NORMALIZATION="imagenet"
+
+DATASET_NAME="publichpa"
+DATASET_CHANNELS=1
+DATASET_PATH="/mnt/ssd/hpa-single-cell/train"
+LABELS_PATH="/mnt/ssd/hpa-single-cell/train.csv"
+PUBLICHPA_LABELS_PATH="/mnt/ssd/hpa-single-cell/publichpa.csv"
+
+DATA_AUGMENTATIONS="cropresize_rotation_hflip_vflip_cutout"
+IMAGE_NORMALIZATION="imagenet"
 
 # CLASS_WEIGHTS=0.1,1.0,0.5,1.0,1.0,1.0,1.0,0.5,1.0,1.0,1.0,10.0,1.0,0.5,0.5,5.0,0.2,0.5,1.0
 CLASS_WEIGHTS=none
@@ -76,6 +75,7 @@ train_model () {
     --dataset_path $DATASET_PATH \
     --labels_path $LABELS_PATH \
     --publichpa_labels_path $PUBLICHPA_LABELS_PATH \
+    --data_augmentations $DATA_AUGMENTATIONS \
     --image_normalization $IMAGE_NORMALIZATION \
     --class_weights $CLASS_WEIGHTS \
     --architecture $ARCHITECTURE \

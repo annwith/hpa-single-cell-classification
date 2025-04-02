@@ -1,5 +1,7 @@
 import argparse
 import typing as tp
+import random
+import numpy as np
 
 import torch
 import torch.nn as nn
@@ -15,6 +17,13 @@ from dataset import HPADataset, HPADatasetFourChannelsImages
 from models import HPAClassifier
 from train import train_epoch
 from evaluate import evaluate, predict
+
+
+# Set the random seed for reproducibility
+SEED = 42
+random.seed(SEED)
+np.random.seed(SEED)
+torch.manual_seed(SEED)
 
 
 def select_optimizer(

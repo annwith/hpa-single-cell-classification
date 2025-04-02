@@ -36,7 +36,7 @@ class HPAClassifier(nn.Module):
         self.model.conv1 = new_conv  # Substitui a camada antiga pela nova
 
         # Print the model architecture
-        print(self.model)
+        # print(self.model)
 
 
     def load_from_checkpoint(self, weights):

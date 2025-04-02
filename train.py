@@ -1,3 +1,4 @@
+import psutil
 import torch
 from tqdm import tqdm
 
@@ -33,11 +34,11 @@ def train_epoch(
     model.train()  # Set model to training mode
     optimizer.zero_grad()  # Clear gradients
     running_loss = 0.0  # Initialize loss accumulator
+
     progress_bar = tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs}", unit="batch")
-
     for batch_idx, (inputs, labels) in enumerate(progress_bar):
-        inputs, labels = inputs.to(device), labels.to(device)  # Move data to device
 
+        inputs, labels = inputs.to(device), labels.to(device)  # Move data to device
         outputs = model(inputs)  # Forward pass [Those are raw logits - I think so...]
 
         loss = criterion(outputs, labels)  # Compute loss
@@ -51,32 +52,38 @@ def train_epoch(
             optimizer.step()  # Update weights
             optimizer.zero_grad()  # Clear gradients for next step
 
-            # Log metrics to W&B
-            lr = scheduler.get_last_lr()[0]
+            # Get current learning rate
+            # Note: This assumes a single optimizer with a single parameter group
+            lr = optimizer.param_groups[0]["lr"]
+            
+            # Log training metrics
             wandb.log({
                 "train/epoch": epoch + 1,
                 "train/lr": lr,
                 "train/train_loss": running_loss / accumulate_steps
             })
 
-            # Log GPU metrics
-            gpu_memory_allocated = torch.cuda.memory_allocated()
-            gpu_memory_reserved = torch.cuda.memory_reserved()
-            gpu_utilization = torch.cuda.utilization(0)  # Requires PyTorch 2.0+
+            # Get CPU and RAM usage
+            cpu_mem = psutil.virtual_memory()
+            cpu_mem_used = cpu_mem.used / (1024 ** 3)  # Convert to GB
+            cpu_mem_free = cpu_mem.available / (1024 ** 3)  # Convert to GB
 
-            # Calculate percentage
-            gpu_memory_percent = (gpu_memory_allocated / gpu_memory_reserved) * 100 if gpu_memory_reserved > 0 else 0
+            # Log GPU metrics
+            gpu_memory_allocated = torch.cuda.memory_allocated() / (1024 ** 3)  # Convert to GB
+            gpu_memory_reserved = torch.cuda.memory_reserved() / (1024 ** 3)  # Convert to GB
 
             wandb.log({
-                "System/GPU Memory Allocated (Bytes)": gpu_memory_allocated,
-                "System/GPU Memory Allocated (%)": gpu_memory_percent,
-                "System/GPU Time Spent Accessing Memory (%)": gpu_utilization
+                "System/GPU Memory Allocated (GB)": gpu_memory_allocated,
+                "System/GPU Memory Reserved (GB)": gpu_memory_reserved,
+                "System/CPU Memory Used (GB)": cpu_mem_used,
+                "System/CPU Memory Free (GB)": cpu_mem_free
             })
 
             # Update progress bar
-            progress_bar.set_postfix({'train loss': running_loss / accumulate_steps})
+            progress_bar.set_postfix({
+                'train loss': running_loss / accumulate_steps,
+                'lr': lr
+            })
 
             running_loss = 0.0  # Reset loss accumulator
             scheduler.step()  # Adjust learning rate
-
-    return running_loss / len(train_loader)  # Return average training loss

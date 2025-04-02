@@ -157,6 +157,11 @@ def train_model(
         batch_size=batch_size, 
         num_workers=4,
         shuffle=False)
+    
+    # Print the number of batches in the train and valid loaders
+    print("\nDataLoader size information:")
+    print(f"Train DataLoader: {len(train_loader)} batches")
+    print(f"Valid DataLoader: {len(valid_loader)} batches")
 
     # Load the model
     model = HPAClassifier(
@@ -172,9 +177,12 @@ def train_model(
         learning_rate=learning_rate)
 
     # Define the learning rate scheduler
+    T_max = epochs * (len(train_loader) // accumulate_steps)
+    print(f"\nScheduler T_max: {T_max}")
+
     scheduler = optim.lr_scheduler.CosineAnnealingLR(
         optimizer,
-        T_max=epochs * len(train_loader),
+        T_max=T_max,
         eta_min=scheduler_eta_min)  # Smooth decay
 
     # Set the device
@@ -185,10 +193,10 @@ def train_model(
     if class_weights:
         class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
         criterion = nn.BCEWithLogitsLoss(pos_weight=class_weights_tensor.to(device))
-        print("\nUsing class weights")
+        print("\nClass weights: Using class weights")
     else:
         criterion = nn.BCEWithLogitsLoss()
-        print("\nNot using class weights")
+        print("\nClass weights: Not using class weights")
 
     # Put the model on the device
     model.to(device)
